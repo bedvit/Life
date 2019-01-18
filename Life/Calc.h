@@ -12,9 +12,13 @@ public:
 
 	void Insert(POINT point, bool inver, std::unordered_map <LONGLONG, POINT> &LifePoint);
 	bool Contains(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint);
-	void RunLife(bool &RunCalc, bool &CalcEnd);
+	void RunLife(bool &RunCalc, bool &CalcEnd, bool &Pause);
 	void DelLife();
-	long& Generation();
-	bool& Pause();
+	long Generation();
+	//bool& Pause();
+	long AreaXmin();
+	long AreaYmin();
+	long AreaXmax();
+	long AreaYmax();
 };
 

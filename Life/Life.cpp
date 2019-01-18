@@ -239,10 +239,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					//hWndEdit = FindWindowEx(hWnd, NULL, _TEXT("Edit"), _TEXT("0000"));
 					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
 					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
+					//calc.Pause()=Pause;
 					//delete(buf);
 					start_time = clock();
 					RunCalc = true;
-					calc.RunLife(RunCalc, CalcEnd);
+					calc.RunLife(RunCalc, CalcEnd,Pause);
 				}
 				break;
 			case IDM_STOP:
@@ -250,8 +251,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				KillTimer(hWnd, 123);
 				break;
 			case IDM_NEW:
+				RunCalc = false;
+				KillTimer(hWnd, 123);
 				calc.DelLife();
-				calc.Generation() = 0;
+				//calc.Generation() = 0;
 				search_time = 0;
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
@@ -301,7 +304,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (RunCalc && CalcEnd)
 			{
 				CalcEnd = false;
-				calc.RunLife(RunCalc, CalcEnd);
+				calc.RunLife(RunCalc, CalcEnd, Pause);
 			}
 		}
 		break;
@@ -365,8 +368,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_itow_s(grid.scale, buffer, 255, 10);
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
 
-			
-
 			if (RunCalc)
 			{
 				end_time = clock(); // конечное время
@@ -380,17 +381,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetRect(&rectTxt, rect.right - 50, 230, 0, 0);
 			int decimal;
 			int sign;
-			//char vOutChar[255];
 			_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 5);
 			//_fcvt_s(buffer, _CVTBUFSIZE,search_time/1000, 5, &decimal, &sign); //для char
 			mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
 
-
 			SetRect(&rectTxt, rect.right - 100, 260, 0, 0);
+			DrawText(hMemDC, TEXT("Ареал"), -1, &rectTxt, DT_NOCLIP);
+			SetRect(&rectTxt, rect.right - 100, 280, 0, 0);
+			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
+			SetRect(&rectTxt, rect.right - 90, 280, 0, 0);
+			_itow_s(calc.AreaXmin(), buffer, 255, 10);
+			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
+
+			SetRect(&rectTxt, rect.right - 100, 295, 0, 0);
+			DrawText(hMemDC, TEXT("Y:"), -1, &rectTxt, DT_NOCLIP);
+			SetRect(&rectTxt, rect.right - 90, 295, 0, 0);
+			_itow_s(calc.AreaYmin(), buffer, 255, 10);
+			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
+
+			SetRect(&rectTxt, rect.right - 50, 280, 0, 0);
+			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
+			SetRect(&rectTxt, rect.right - 40, 280, 0, 0);
+			_itow_s(calc.AreaXmax(), buffer, 255, 10);
+			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
+
+			SetRect(&rectTxt, rect.right - 50, 295, 0, 0);
+			DrawText(hMemDC, TEXT("Y:"), -1, &rectTxt, DT_NOCLIP);
+			SetRect(&rectTxt, rect.right - 40, 295, 0, 0);
+			_itow_s(calc.AreaYmax(), buffer, 255, 10);
+			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
+			
+			SetRect(&rectTxt, rect.right - 100, 325, 0, 0);
 			DrawText(hMemDC, TEXT("Замедление, мс."), -1, &rectTxt, DT_NOCLIP);
-			//hWndEdit = FindWindowEx(hWnd, NULL, _TEXT("Edit"), _TEXT("0000"));
-			MoveWindow(hWndEdit,  rect.right - 100, 280, 100, 14, TRUE);
+			MoveWindow(hWndEdit,  rect.right - 100, 345, 100, 14, TRUE);
 			//ИНФО панель
 			
 			BitBlt(hdc, 0, 0, size.x, size.y, hMemDC, 0, 0, SRCCOPY);
@@ -405,21 +429,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
 
-		case WM_LBUTTONDOWN: // $ Левая кнопка нажата
-
-			LbuttonClick = true; // $$$$$ Включим режим выделения клеток
-			mousePos.x = xPos;  // $$$$$ Запомним координаты мыши
-			mousePos.y = yPos;
-			POINT calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-			if (calc.Contains(calcPoint, calc.LifePoint)) LifeInvert = true; else LifeInvert = false; //смотрим есть ли такой элемент
-			mousePosPoint.x = calcPoint.x;
-			mousePosPoint.y = calcPoint.y;
-			calc.Insert(calcPoint, LifeInvert, calc.LifePoint);
-			InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
-			break;
+	case WM_LBUTTONDOWN: // $ Левая кнопка нажата
+		//Pause = true;
+		LbuttonClick = true; // $$$$$ Включим режим выделения клеток
+		mousePos.x = xPos;  // $$$$$ Запомним координаты мыши
+		mousePos.y = yPos;
+		POINT calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+		if (calc.Contains(calcPoint, calc.LifePoint)) LifeInvert = true; else LifeInvert = false; //смотрим есть ли такой элемент
+		mousePosPoint.x = calcPoint.x;
+		mousePosPoint.y = calcPoint.y;
+		calc.Insert(calcPoint, LifeInvert, calc.LifePoint);
+		InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+		break;
 
 	case	WM_RBUTTONDOWN: // $ Правая кнопка нажата
-
+		//Pause = true;
 		DragEnabled = true; // $$$$$ Включим режим таскания сетки
 		mousePos.x = xPos;  // $$$$$ Запомним координаты мыши
 		mousePos.y = yPos;
@@ -427,7 +451,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_MOUSEMOVE:  // $$$$$ Мышка двигается 
-
+		
 		// используем TrackMouseEvent, при выходе за пределы пользовательского окна
 		TRACKMOUSEEVENT tme;
 		tme.cbSize = sizeof(tme);
@@ -445,6 +469,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else if (LbuttonClick)
 		{
+			//Pause = true;
 			long xPosTmp = xPos - mousePos.x;//разница от текущих координат и записанных в координатах экрана
 			long yPosTmp = yPos - mousePos.y;
 			long MaxPosTmp;// пропуски мышки, которые мы будем обсчитывать
@@ -478,13 +503,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_MOUSELEAVE: //Сообщение WM_MOUSELEAVE посылается в окно тогда, когда курсор оставляет рабочую область окна, заданную при предшествующем вызове функции TrackMouseEvent.
 		LbuttonClick=false; //отключаем выделение
+		//Pause = false;
 		break;
 
 	case WM_RBUTTONUP: // $$$$$ Правая кнопка отжата
 		DragEnabled = false; // $$$$$ Выключим режим таскания. Если не выключить, сетка будет вечно ходить за мышкой.
+		//Pause = false;
 		break;
 	case WM_LBUTTONUP: // $$$$$ Левая кнопка отжата
 		LbuttonClick = false; // $$$$$ Выключим режим выделения клеток. 
+		//Pause = false;
 		break;
 	case WM_ERASEBKGND://фон окна должен быть стерт (например, когда окно изменено)
 
