@@ -6,7 +6,7 @@
 #include "dos.h"
 
 
-//CRITICAL_SECTION cs;//критическая секция
+//CRITICAL_SECTION cs;//критическая секция!!
 //std::unordered_map <LONGLONG, POINT> СloudLifePoint;
 
 static long generation;
