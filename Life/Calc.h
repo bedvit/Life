@@ -9,12 +9,13 @@ public:
 
 	Calc();
 	~Calc();
-
-	void Insert(POINT point, bool inver, std::unordered_map <LONGLONG, POINT> &LifePoint);
+	LONGLONG HashPoint(POINT point);
+	void Insert(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint, bool inver);
 	bool Contains(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint);
-	void RunLife(bool &RunCalc, bool &CalcEnd, bool &Pause);
+	void RunLife();
 	void DelLife();
 	long Generation();
+	//long& Generation2;
 	//bool& Pause();
 	long AreaXmin();
 	long AreaYmin();

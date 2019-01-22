@@ -5,6 +5,7 @@
 #include "Life.h"
 #include "Grid.h"
 #include "Calc.h"
+#include "rle.h"
 //#include "Windef.h"
 #include <thread>
 #include "Windows.h"
@@ -24,6 +25,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 
 Grid grid;
 Calc calc;
+Rle rle;
+
 // $$$$$ Класс point написал тоже я. Это просто пара целых переменных x, y. Им можно задавать координаты ячейки грида, координаты пикселя, разность между двумя точками. Полезный короче. 
 // В стандартной библиотеке есть такой класс, но я хотел чтобы ты заценил насколько он простой. Потом я его убью и буду юзать типовой.
 POINT size; // $$$$$ Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
@@ -31,9 +34,9 @@ POINT mousePos; // $$$$$ Здесь будем хранить позицию м�
 POINT mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 //HWND hWnd;
 
-bool RunCalc=false; //запустить расчет жизни 
-bool CalcEnd=false; //вычисления закончены - готов расчет нового поколения
-bool Pause = false; //когда отрисовываем экран calc не считает
+//bool RunCalc=false; //запустить расчет жизни 
+//bool CalcEnd=false; //вычисления закончены - готов расчет нового поколения
+//bool Pause = false; //когда отрисовываем экран calc не считает
 static int wheelDelta = 0; // $$$$$ требуется для считывания колесика мышки
 bool DragEnabled; // $$$$$ Для таскания грида правой кнопкой мыши
 bool LbuttonClick; // $$$$$ Для выделения ячеек левой кнопкой мыши
@@ -234,24 +237,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
-				if (!RunCalc)
-				{
+				//if (!RunCalc)
+				//{
 					//hWndEdit = FindWindowEx(hWnd, NULL, _TEXT("Edit"), _TEXT("0000"));
 					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
 					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
 					//calc.Pause()=Pause;
 					//delete(buf);
 					start_time = clock();
-					RunCalc = true;
-					calc.RunLife(RunCalc, CalcEnd,Pause);
-				}
+					//RunCalc = true;
+					//calc.RunLife(RunCalc, CalcEnd,Pause);
+					calc.RunLife();
+				//}
 				break;
 			case IDM_STOP:
-				RunCalc =false;
+				//RunCalc =false;
 				KillTimer(hWnd, 123);
 				break;
 			case IDM_NEW:
-				RunCalc = false;
+				//RunCalc = false;
 				KillTimer(hWnd, 123);
 				calc.DelLife();
 				//calc.Generation() = 0;
@@ -270,7 +274,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (GetOpenFileName(&ofn))
 				{
 					// Do something usefull with the filename stored in szFileName 
+					rle.Load(ofn.lpstrFile, calc);
 				}
+				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_SAVE:
 				ZeroMemory(&ofn, sizeof(ofn));
@@ -286,6 +292,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (GetSaveFileName(&ofn))
 				{
 					// Do something usefull with the filename stored in szFileName 
+					rle.Save(ofn.lpstrFile, calc);
 				}
 				break;
             default:
@@ -297,15 +304,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_TIMER:
 		{
 			//блок для отслеживание вычисления в параллельных потоках
-			if (CalcEnd)
-			{
+			//if (CalcEnd)
+			//{
 				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно ели готово новое поколение жизни.
-			}
-			if (RunCalc && CalcEnd)
-			{
-				CalcEnd = false;
-				calc.RunLife(RunCalc, CalcEnd, Pause);
-			}
+			//}
+			//if (RunCalc && CalcEnd)
+			//{
+				//CalcEnd = false;
+				//calc.RunLife(RunCalc, CalcEnd, Pause);
+				calc.RunLife();
+				end_time = clock(); // конечное время
+				search_time = end_time - start_time; // искомое время
+
+			//}
 		}
 		break;
 	case WM_PAINT: // $$$ Событие прорисовки. Вызывается системой когда окно нужно перерисовать. Например если мы его растянули и т.д. Мы сами можешь попросить систему вызвать это событие.(см. ниже) 
@@ -326,8 +337,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			grid.Draw(hMemDC, size);// $$$$$ Скажем гриду, чтобы нарисовал себя в рамках размеров клиентского окна
 			grid.FillRectangle(hMemDC, calc);//Заполняем клетки
 			
-			// ИНФО панель
+			
+			// ИНФО ПАНЕЛЬ
 			RECT rectTxt; //координаты текста
+			long Xstart; //для авто-выравнивания
+			long Ystart;
+			
 			//wchar_t buffer[255]; //результат для инфо панели
 			//HFONT hFont = CreateFont(16,0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,	CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Segoe UI"));
 			SelectObject(hMemDC, hFont);
@@ -368,11 +383,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_itow_s(grid.scale, buffer, 255, 10);
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
 
-			if (RunCalc)
-			{
-				end_time = clock(); // конечное время
-				search_time = end_time - start_time; // искомое время
-			}
+			//if (RunCalc)
+			//{
+				//end_time = clock(); // конечное время
+				//search_time = end_time - start_time; // искомое время
+			//}
 			SetRect(&rectTxt, rect.right - 100, 210, 0, 0);
 			DrawText(hMemDC, TEXT("Таймер, мс./с."), -1, &rectTxt, DT_NOCLIP);
 			SetRect(&rectTxt, rect.right - 100, 230, 0, 0);
@@ -415,7 +430,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetRect(&rectTxt, rect.right - 100, 325, 0, 0);
 			DrawText(hMemDC, TEXT("Замедление, мс."), -1, &rectTxt, DT_NOCLIP);
 			MoveWindow(hWndEdit,  rect.right - 100, 345, 100, 14, TRUE);
-			//ИНФО панель
+			//ИНФО ПЕНЕЛЬ
 			
 			BitBlt(hdc, 0, 0, size.x, size.y, hMemDC, 0, 0, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
@@ -438,7 +453,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (calc.Contains(calcPoint, calc.LifePoint)) LifeInvert = true; else LifeInvert = false; //смотрим есть ли такой элемент
 		mousePosPoint.x = calcPoint.x;
 		mousePosPoint.y = calcPoint.y;
-		calc.Insert(calcPoint, LifeInvert, calc.LifePoint);
+		calc.Insert(calcPoint, calc.LifePoint, LifeInvert);
 		InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 		break;
 
@@ -490,7 +505,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					mousePosPoint.x = calcPoint.x;
 					mousePosPoint.y = calcPoint.y;
-					calc.Insert(calcPoint, LifeInvert, calc.LifePoint);
+					calc.Insert(calcPoint, calc.LifePoint, LifeInvert);
 						
 				}
 			}

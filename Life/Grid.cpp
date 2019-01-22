@@ -85,6 +85,7 @@ void Grid::Draw(HDC hDC, POINT size)
 
 	SelectObject(hDC, OldPen);
 	DeleteObject(hPen);
+	DeleteObject(OldPen);
 
 	//MoveToEx(hDC, 0, 0, NULL);  // Для теста
 	//LineTo(hDC, size.x, size.y);

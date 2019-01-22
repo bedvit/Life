@@ -4,31 +4,39 @@
 #include <thread>
 #include "windows.h"
 #include "dos.h"
+#include <deque>
 
 
 //CRITICAL_SECTION cs;//критическая секция
-//std::unordered_map <LONGLONG, POINT> СloudLifePoint;
 
-static long generation;
-//static POINT point;
-static long areaXmin;
-static long areaYmin;
-static long areaXmax;
-static long areaYmax;
-//static bool pause;
+
+static long generation=0;
+static long areaXmin= LONG_MAX;
+static long areaYmin= LONG_MAX;
+static long areaXmax= LONG_MIN;
+static long areaYmax= LONG_MIN;
+//static std::deque<POINT> loudLifePoint;//облако
+//static std::vector<POINT> loudLifePoint;//облако
+
+static std::unordered_map <LONGLONG, POINT> LifePointRun; //предыдущее поколение
 
 
 Calc::Calc()
 {
-	
+	//Generation2= generation;
 	//LifePoint;
 
 }
 
-void Calc::Insert(POINT point, bool invert, std::unordered_map <LONGLONG, POINT> &LifePoint)
+LONGLONG Calc::HashPoint(POINT point)
+{
+	return (LONGLONG)point.x * 1000000000 + point.y;
+}
+
+void Calc::Insert(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint, bool invert)
 
 {
-	LONGLONG tmp = (LONGLONG)point.x * 1000000000 + point.y;
+	LONGLONG tmp = HashPoint(point);
 	if (invert)
 	{
 		LifePoint.erase(tmp);
@@ -36,8 +44,7 @@ void Calc::Insert(POINT point, bool invert, std::unordered_map <LONGLONG, POINT>
 	else
 	{
 		LifePoint[tmp] = point;
-		
-		if (areaXmin > point.x)areaXmin = point.x;
+		if (areaXmin > point.x)areaXmin = point.x;//расчет ареала 
 		if (areaYmin > point.y)areaYmin = point.y;
 		if (areaXmax < point.x)areaXmax = point.x;
 		if (areaYmax < point.y)areaYmax = point.y;
@@ -55,43 +62,50 @@ long Calc::AreaYmax() { return areaYmax; }
 bool Calc::Contains(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint) //аналог std::unordered_map::contains (C++20)
 
 {
-	LONGLONG tmp = (LONGLONG)point.x * 1000000000 + point.y;
+	LONGLONG tmp = HashPoint(point);
 	if (LifePoint.count(tmp) == 1) return true; else return false;
 
 }
 
 
-void Run(bool &RunCalc, bool &CalcEnd, bool &Pause, std::unordered_map <LONGLONG, POINT> &LifePoint)
+void Run(std::unordered_map <LONGLONG, POINT> &LifePoint)
 {
 
-	while (RunCalc && !CalcEnd) {
-		if (!Pause)
-		{
+	//while (RunCalc && !CalcEnd) {
+	//	if (!Pause)
+	//	{
 			int n[3] = { -1, 0, 1 };
 			POINT tmpPoint;// = { 0,0 };
 			Calc calc;
 			int L=0;
-			std::unordered_map <LONGLONG, POINT> loudLifePoint;
+			//long iter;
+			std::unordered_map <LONGLONG, POINT> LifePointLoud; //облако
 			//EnterCriticalSection(&cs);//критическая секция
-			std::unordered_map <LONGLONG, POINT> LifePointOld(LifePoint);
+			std::unordered_map <LONGLONG, POINT> LifePointOld(LifePoint); //предыдущее поколение
 			//LeaveCriticalSection(&cs);//критическая секция
 			std::unordered_map<LONGLONG, POINT>::iterator i;
 
+			if (generation==0)
+			{
+				LifePointRun = LifePointOld;
+			}
 		
 
-			for (i = LifePointOld.begin(); i != LifePointOld.end(); i++) //заполняем облако
+			for (i = LifePointRun.begin(); i != LifePointRun.end(); i++) //заполняем облако
 			{
 				for (int y = 0; y < 3; y++) //обработка 9 координат
 				{
 					for (int x = 0; x < 3; x++)
 					{
 						tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
-						calc.Insert(tmpPoint, false, loudLifePoint);
+						calc.Insert(tmpPoint, LifePointLoud, false);
+						//loudLifePoint[iter] = tmpPoint;
+						//iter++;
 					}
 				}
 			}
-
-			for (i = loudLifePoint.begin(); i != loudLifePoint.end(); i++) //считаем новое поколение
+			LifePointRun.clear();
+			for (i = LifePointLoud.begin(); i != LifePointLoud.end(); i++) //считаем новое поколение по облаку
 			{
 				for (int y = 0; y < 3; y++) //обработка 9 координат
 				{
@@ -99,31 +113,60 @@ void Run(bool &RunCalc, bool &CalcEnd, bool &Pause, std::unordered_map <LONGLONG
 					{
 						if (!(y == 1 && x == 1))
 						{
-							tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
-							if (calc.Contains(tmpPoint, LifePointOld))	L++;
+							
+							
+								tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
+								if (calc.Contains(tmpPoint, LifePointOld))	L++;
+								if (L > 3) goto nx_; //нет смысла считать более 4 точек вокруг
 						}
 					}
 				}
 				//EnterCriticalSection(&cs);//критическая секция
-				if (L < 2) calc.Insert(i->second, true, LifePoint);
-				else if (L == 3) calc.Insert(i->second, false, LifePoint);
-				else if (L > 3) calc.Insert(i->second, true, LifePoint);
+				nx_:
+				if (L < 2)
+				{
+					if (calc.Contains(i->second, LifePointOld)) //если точка была
+					{
+						calc.Insert(i->second, LifePoint, true);
+						calc.Insert(i->second, LifePointRun, false);
+					}
+				}
+				else if (L == 2)
+				{
+					
+				}
+				else if (L == 3)
+				{
+					if (!calc.Contains(i->second, LifePointOld)) //если точки не было
+					{
+						calc.Insert(i->second, LifePoint, false);
+						calc.Insert(i->second, LifePointRun, false);
+					}
+				}
+				else if (L > 3)
+				{
+					if (calc.Contains(i->second, LifePointOld)) //если точка была
+					{
+						calc.Insert(i->second, LifePoint, true);
+						calc.Insert(i->second, LifePointRun, false);
+					}
+				}
 				//LeaveCriticalSection(&cs);//критическая секция
 				L = 0;
 			}
 			//EnterCriticalSection(&cs);//критическая секция
 			++generation;
-			CalcEnd = true;
+			//CalcEnd = true;
 			//LeaveCriticalSection(&cs);//критическая секция
-		}
-	}
+		//}
+	//}
 }
 
-void Calc::RunLife(bool &RunCalc, bool &CalcEnd, bool &Pause)
+void Calc::RunLife()
 
 {
-	if (!Pause)
-	{
+	//if (!Pause)
+	//{
 		////InitializeCriticalSection(&cs);
 		//std::vector<std::thread> thr(2); //для запуска двух потоков
 		//for (int i = 1; i <= 1; i++) thr[i - 1] = std::thread(Run, std::ref(RunCalc), std::ref(CalcEnd), std::ref(Pause), std::ref(this->LifePoint));
@@ -131,8 +174,8 @@ void Calc::RunLife(bool &RunCalc, bool &CalcEnd, bool &Pause)
 		////for (int i = 1; i <= 1; i++) thr[i - 1].join(); //ждем все потоки
 
 
-		Run(std::ref(RunCalc), std::ref(CalcEnd), std::ref(Pause), std::ref(this->LifePoint));
-	}
+		Run(std::ref(this->LifePoint));
+	//}
 }
 
 void Calc::DelLife()
@@ -140,10 +183,10 @@ void Calc::DelLife()
 {
 	this->LifePoint.clear();
 	generation = 0;
-	areaXmin = 0;
-	areaYmin = 0;
-	areaXmax = 0;
-	areaYmax = 0;
+	areaXmin = LONG_MAX;
+	areaYmin = LONG_MAX;
+	areaXmax = LONG_MIN;
+	areaYmax = LONG_MIN;
 }
 
 Calc::~Calc()
