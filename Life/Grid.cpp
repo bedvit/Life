@@ -3,6 +3,8 @@
 #include "Grid.h"
 #include "Calc.h"
 #include <unordered_map>
+//#include <concurrent_unordered_map.h>
+#include <map>
 
 Grid::Grid()
 {
@@ -67,22 +69,22 @@ void Grid::Draw(HDC hDC, POINT size)
 	long wx = size.x / scale + 1; // количество линий по горизонтали, видимых а окне
 	long wy = size.y / scale + 1; // количество линий по вертикали, видимых а окне
 	// Выводим сетку
-	if (scale <= 4) return; //не рисуем сетку при ячейке <= 4 пикселя  
+	if (scale > 4)//не рисуем сетку при ячейке <= 4 пикселя  
+	{	
 	// Сначала вертикальные линии
-	for (long x = 0; x < wx; x++)
-	{
-		//SetPixel(hDC, px + x * scale, 0, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет
-		MoveToEx(hDC, px + x * scale, 0, NULL); // Поставим точку
-		LineTo(hDC, px + x * scale, size.y); // От неё проведем линию
+		for (long x = 0; x < wx; x++)
+		{
+			//SetPixel(hDC, px + x * scale, 0, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет
+			MoveToEx(hDC, px + x * scale, 0, NULL); // Поставим точку
+			LineTo(hDC, px + x * scale, size.y); // От неё проведем линию
+		}
+		// Потом горизонтальные
+		for (long y = 0; y < wy; y++)
+		{
+			MoveToEx(hDC, 0, py + y * scale, NULL);
+			LineTo(hDC, size.x, py + y * scale);
+		}
 	}
-
-	// Потом горизонтальные
-	for (long y = 0; y < wy; y++)
-	{
-		MoveToEx(hDC, 0, py + y * scale, NULL);
-		LineTo(hDC, size.x, py + y * scale);
-	}
-
 	SelectObject(hDC, OldPen);
 	DeleteObject(hPen);
 	DeleteObject(OldPen);
@@ -143,6 +145,5 @@ void Grid::DrawRect(HDC hDC, HBRUSH s, POINT pos)
 
 	//Заполняем прямоугольник
 	FillRect(hDC, &r, s);
-
 }
 

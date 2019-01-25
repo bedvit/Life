@@ -1,5 +1,7 @@
 #pragma once
 #include <unordered_map>
+#include <concurrent_unordered_map.h>
+#include <map>
 class Calc
 {
 public:
@@ -21,5 +23,6 @@ public:
 	long AreaYmin();
 	long AreaXmax();
 	long AreaYmax();
+	//std::unordered_map& LifePoint();
 };
 

@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include <iostream>
-#include <fstream>
 #include <string>
+#include <fstream>
 #include "rle.h"
 #include "Calc.h"
+#include <algorithm>
 
 
 
@@ -30,6 +31,7 @@ void Rle::Save(std::wstring name, Calc& calc)
 
 	std::string strOut("x = " + std::to_string(areaXmax - areaXmin+1) + ", y = " + std::to_string(areaYmax - areaYmin+1) + ", rule = B3 / S23\n");
 	std::string strTmp;
+
 	for (long y = areaYmin; y <= areaYmax; y++)
 	{
 		for (long x = areaXmin; x <= areaXmax; x++)
@@ -45,7 +47,10 @@ void Rle::Save(std::wstring name, Calc& calc)
 				dupB++;
 				strTmp += "b";
 			}
-
+			if (dupO == dupOold)
+			{
+				strTmp = strTmp.to_string(dupO) + "o";
+			}
 
 			long dupOold = dupO;
 			long dupBold = dupB;
@@ -74,10 +79,11 @@ void Rle::Save(std::wstring name, Calc& calc)
 	return;
 }
 
-void Rle::Load(std::wstring name, Calc& calc)
+void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 {
 	std::ifstream file(name);
 	std::string s;
+	//std::string sTmp;
 	long count=0;
 	long countTmp=0;
 	long repeat = 0;
@@ -89,17 +95,20 @@ void Rle::Load(std::wstring name, Calc& calc)
 	{
 		while (getline(file, s))
 		{
-			if (s[0] == '0' || s[0] == '1' || s[0] == '2' || s[0] == '3' || s[0] == '4' || s[0] == '5' || s[0] == '6' || s[0] == '7' || s[0] == '8' || s[0] == '9' || s[0] == 'o' || s[0] == 'b' || s[0] == '$') //пропускаем строки только с такими начальными символами
+			s.erase(std::remove(s.begin(), s.end(), ' '), s.end()); //убираем пробелы
+			if (s[0] == '0' || s[0] == '1' || s[0] == '2' || s[0] == '3' || s[0] == '4' || s[0] == '5' || s[0] == '6' || s[0] == '7' || s[0] == '8' || s[0] == '9' || s[0] == 'o' || s[0] == 'b' || s[0] == '$' || s[0] == '!' || s[0] == ' ' || s[0] == 'о') //пропускаем строки только с такими начальными символами
 			{
 				countTmp = -1;
 				for (long i = 0; i < s.size(); i++)
 				{
-					if (s[i] == 'o' || s[i] == 'b' || s[i] == '$') //если найден символ, считаем
+					if (s[i] == '!') goto end_;
+					if (s[i] == 'o' || s[i] == 'b' || s[i] == '$' || s[i] == 'о') //если найден символ, считаем
 					{
 						count = i - countTmp - 1;
-						repeat = std::stoi('0'+s.substr(countTmp + 1, count)); //(позиция, длина)//количество повторов
+						//sTmp = '0' + s.substr(countTmp + 1, count);
+						repeat = std::stoi('0' + s.substr(countTmp + 1, count)); //(позиция, длина)//количество повторов символа
 						countTmp = i;
-						if (s[i] == 'o')
+						if (s[i] == 'o' || s[i] == 'о')
 						{
 							if (repeat == 0)
 							{
@@ -140,8 +149,16 @@ void Rle::Load(std::wstring name, Calc& calc)
 			}
 		}
 	}
-
+	end_:
 	file.close();
+
+	//автомасштабирование
+	long scX= rect.right / ((calc.AreaXmax() - calc.AreaXmin() + 1));
+	long scY = rect.bottom / ((calc.AreaYmax() - calc.AreaYmin() + 1));
+	if (scX > scY) scX = scY;//; else grid.scale = sc1;
+	if (scX > 50) scX = 50; //макс 50 пикселей
+	if (scX <= 0) scX = 1; //мин 1 пикселей
+	grid.scale = scX;
 }
 
 Rle::~Rle()
