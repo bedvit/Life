@@ -2,18 +2,19 @@
 #include <unordered_map>
 #include <concurrent_unordered_map.h>
 #include <map>
+#include "Point.h"
 class Calc
 {
 public:
 	
-	std::unordered_map <LONGLONG, POINT> LifePoint;
-	//std::unordered_map <LONGLONG,POINT> loudLifePoint;
+	std::unordered_map <LONGLONG, Point> LifePoint;
+	//std::unordered_map <LONGLONG,Point> loudLifePoint;
 
 	Calc();
 	~Calc();
-	LONGLONG HashPoint(POINT point);
-	void Insert(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint, bool inver);
-	bool Contains(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint);
+	LONGLONG HashPoint(Point point);
+	void Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool inver);
+	bool Contains(Point point, std::unordered_map <LONGLONG, Point> &LifePoint);
 	void RunLife();
 	void DelLife();
 	long Generation();

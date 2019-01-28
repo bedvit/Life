@@ -5,6 +5,7 @@
 #include "Life.h"
 #include "Grid.h"
 #include "Calc.h"
+#include "Point.h"
 #include "rle.h"
 //#include "Windef.h"
 #include <thread>
@@ -26,13 +27,15 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 Grid grid;
 Calc calc;
 Rle rle;
+Point point;
 
 // $$$$$ Класс point написал тоже я. Это просто пара целых переменных x, y. Им можно задавать координаты ячейки грида, координаты пикселя, разность между двумя точками. Полезный короче. 
 // В стандартной библиотеке есть такой класс, но я хотел чтобы ты заценил насколько он простой. Потом я его убью и буду юзать типовой.
-POINT size; // $$$$$ Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
-POINT mousePos; // $$$$$ Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
-POINT mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-//HWND hWnd;
+Point size; // $$$$$ Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
+Point mousePos; // $$$$$ Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
+Point mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+Point calcPoint;
+					 //HWND hWnd;
 
 //bool RunCalc=false; //запустить расчет жизни 
 //bool CalcEnd=false; //вычисления закончены - готов расчет нового поколения
@@ -46,6 +49,7 @@ unsigned int end_time; // = clock(); // конечное время
 unsigned int search_time; // = end_time - start_time; // искомое время
 unsigned int pre_time; //
 unsigned int generation_time; //
+//unsigned int generation_timeOld;
 
 HWND hWndEdit;
 //открыть файл
@@ -208,10 +212,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// $$$$$ Получим координаты мыши в рамках клиентского окна 
 	// $$$$$ Клиентское окно или вьюпорт это рабочая область формы (без рамки, заголовка и меню).
 
-	POINT p;
+	Point p;
 	p.x = xPos;
 	p.y = yPos;
-	ScreenToClient(hWnd, &p); // $$$$$ Спец функция для этого 
+	POINT P;
+	ScreenToClient(hWnd, &P); // $$$$$ Спец функция для этого 
 
 	//wchar_t* buf = new wchar_t[255];
 	////HWND hWndEdit;
@@ -239,18 +244,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
+					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
+					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
+					start_time = clock()- search_time;
+					//RunCalc = true;
 				//if (!RunCalc)
 				//{
 					//hWndEdit = FindWindowEx(hWnd, NULL, _TEXT("Edit"), _TEXT("0000"));
-					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
-					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
 					//calc.Pause()=Pause;
 					//delete(buf);
-					start_time = clock();
-					//RunCalc = true;
+
 					//calc.RunLife(RunCalc, CalcEnd,Pause);
-					calc.RunLife();
-				//}
+					//calc.RunLife();
+			/*	}*/
 				break;
 			case IDM_STOP:
 				//RunCalc =false;
@@ -265,10 +271,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_OPEN:
-				
+				//RunCalc = false;
 				RECT rect;
 				GetClientRect(hWnd, &rect);// $$$$$ Узнаем размеры клиентского окна.
-
 				KillTimer(hWnd, 123);
 				calc.DelLife();
 				search_time = 0;
@@ -327,6 +332,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				calc.RunLife();
 				end_time = clock(); // конечное время
 				search_time = end_time - start_time; // искомое время
+				//generation_timeOld = generation_time;
 				generation_time = end_time - pre_time; //
 				pre_time = end_time; // конечное время
 			//}
@@ -381,7 +387,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
 			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
 			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			POINT calcPoint = grid.GetCell(mousePos);
+			Point calcPoint = grid.GetCell(mousePos);
 			_itow_s(calcPoint.x, buffer, 255, 10);
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
 			Ystart += 20;
@@ -459,7 +465,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DrawText(hMemDC, TEXT("Поколений/сек."), -1, &rectTxt, DT_NOCLIP);
 			Ystart += 20;
 			int out = 0;
-			if(search_time != 0) out=(1000/generation_time);
+			if (generation_time != 0) out = (1000 / (generation_time));// каждый ход новое значение
+			//if(generation_time != 0) out=(2000/(generation_time + generation_timeOld));// каждый ход новое значение - усредненное по двум
+			//if (calc.Generation() != 0) out = (calc.Generation()*1000/search_time); //накопительно за все время выполнения
 			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
 			_itow_s(out, buffer, 255, 10);
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
@@ -492,7 +500,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		LbuttonClick = true; // $$$$$ Включим режим выделения клеток
 		mousePos.x = xPos;  // $$$$$ Запомним координаты мыши
 		mousePos.y = yPos;
-		POINT calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+		calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 		if (calc.Contains(calcPoint, calc.LifePoint)) LifeInvert = true; else LifeInvert = false; //смотрим есть ли такой элемент
 		mousePosPoint.x = calcPoint.x;
 		mousePosPoint.y = calcPoint.y;
@@ -536,14 +544,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//if (MaxPosTmp==0) break; //для одинаковых координат выходим из цикла
 			long ColPosTmp = (MaxPosTmp / grid.scale)+1;//количество циклов расчета координат по этому пропуску с учетом масштаба
 
-			POINT start = mousePos;
+			Point start = mousePos;
 
 			for (long i = 0; i < ColPosTmp; i++)
 			{
 				mousePos.x = start.x + (float)xPosTmp/ ColPosTmp*(i+1);
 				mousePos.y = start.y + (float)yPosTmp / ColPosTmp * (i + 1);
 
-				POINT calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+				Point calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 				if (mousePosPoint.x != calcPoint.x || mousePosPoint.y != calcPoint.y)
 				{
 					mousePosPoint.x = calcPoint.x;

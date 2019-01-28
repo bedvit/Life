@@ -150,6 +150,9 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,6 +165,7 @@
     <ClInclude Include="Calc.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Life.h" />
+    <ClInclude Include="Point.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Rle.h" />
     <ClInclude Include="stdafx.h" />
@@ -171,6 +175,7 @@
     <ClCompile Include="Calc.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Life.cpp" />
+    <ClCompile Include="Point.cpp" />
     <ClCompile Include="Rle.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

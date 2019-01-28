@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Calc.h"
+//#include "Point.h"
 #include <unordered_map>
 #include <map>
 //#include <thread>
@@ -26,17 +27,18 @@ static long areaXmin= LONG_MAX;
 static long areaYmin= LONG_MAX;
 static long areaXmax= LONG_MIN;
 static long areaYmax= LONG_MIN;
-//static std::deque<POINT> loudLifePoint;//облако
-//static std::vector<POINT> loudLifePoint;//облако
+//static std::deque<Point> loudLifePoint;//облако
+//static std::vector<Point> loudLifePoint;//облако
 
-//static std::unordered_map <LONGLONG, POINT> LifePointRun; //предыдущее поколение
-static std::unordered_map<LONGLONG, POINT> LifePointRun;
-////static std::unordered_map<LONGLONG, POINT> LifePointRunOld;
-////static std::unordered_map <LONGLONG, POINT> LifePointNew;
-//static std::unordered_map <LONGLONG, POINT> LifePointOld;
-//static std::unordered_map <LONGLONG, POINT> LifePointLoud;
-//static std::unordered_map <LONGLONG, POINT> LifePointTmp;
-//static std::unordered_map <LONGLONG, POINT> LifePoint;
+//static std::unordered_map <LONGLONG, Point> LifePointRun; //предыдущее поколение
+static std::unordered_map<LONGLONG, Point> LifePointRun;
+////static std::unordered_map<LONGLONG, Point> LifePointRunOld;
+////static std::unordered_map <LONGLONG, Point> LifePointNew;
+//static std::unordered_map <LONGLONG, Point> LifePointOld;
+//static std::unordered_map <LONGLONG, Point> LifePointLoud;
+//static std::unordered_map <LONGLONG, Point> LifePointTmp;
+//static std::unordered_map <LONGLONG, Point> LifePoint;
+static std::unordered_map<LONGLONG, Point> LifePointEnd;
 
 
 //#include <ppl.h>
@@ -57,12 +59,12 @@ Calc::Calc()
 //	LifePoint= LifePoint
 //}
 
-LONGLONG Calc::HashPoint(POINT point)
+LONGLONG Calc::HashPoint(Point point)
 {
-	return (LONGLONG)point.x * 1000000000 + point.y;
+	return (LONGLONG)point.x * 2147483648 + point.y; //2^31
 }
 
-//void InsertRun(POINT point, bool invert)
+//void InsertRun(Point point, bool invert)
 //
 //{
 //	Calc calc;
@@ -72,7 +74,7 @@ LONGLONG Calc::HashPoint(POINT point)
 //	//LeaveCriticalSection(&cs);//критическая секция
 //}
 
-void Calc::Insert(POINT point, std::unordered_map <LONGLONG, POINT> &LifePoint, bool invert)
+void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool invert)
 
 {
 	//EnterCriticalSection(&cs);//критическая секция
@@ -105,11 +107,15 @@ long Calc::AreaYmax() { return areaYmax; }
 
 //bool& Calc::Pause() { return pause; }
 
-bool Calc::Contains(POINT point, std::unordered_map<LONGLONG, POINT> &LifePoint) //аналог std::unordered_map::contains (C++20)
+bool Calc::Contains(Point point, std::unordered_map<LONGLONG, Point> &LifePoint) //аналог std::unordered_map::contains (C++20)
 
 {
 	LONGLONG tmp = HashPoint(point);
-	if (LifePoint.count(tmp) == 1) return true; else return false;
+	//std::unordered_map<LONGLONG, Point>::iterator i;
+	//i = LifePoint.find(tmp);
+	//LONGLONG o = i->first;
+	//if (LifePoint.count(tmp) == 1) return true; else return false;
+	if (LifePoint.find(tmp) != LifePoint.end()) return true; else return false;
 
 }
 
@@ -121,13 +127,13 @@ bool Calc::Contains(POINT point, std::unordered_map<LONGLONG, POINT> &LifePoint)
 //	//	if (!Pause)
 //	//	{
 //	int n[3] = { -1, 0, 1 };
-//	POINT tmpPoint;// = { 0,0 };
+//	Point tmpPoint;// = { 0,0 };
 //	Calc calc;
 //
 //	//long iter;
-//	//std::unordered_map <LONGLONG, POINT> LifePointLoud; //облако
+//	//std::unordered_map <LONGLONG, Point> LifePointLoud; //облако
 //	//EnterCriticalSection(&cs);//критическая секция
-//	//std::unordered_map <LONGLONG, POINT> LifePointOld(LifePoint); //предыдущее поколение
+//	//std::unordered_map <LONGLONG, Point> LifePointOld(LifePoint); //предыдущее поколение
 //	//LeaveCriticalSection(&cs);//критическая секция
 //	
 //
@@ -136,11 +142,11 @@ bool Calc::Contains(POINT point, std::unordered_map<LONGLONG, POINT> &LifePoint)
 //	//{
 //	//	LifePointRunOld = LifePointOld;
 //	//}
-//	POINT x = LifePointRunOld[0];
+//	Point x = LifePointRunOld[0];
 //	x = LifePointRunOld[1];
 //	//concurrency::parallel_for(LifePointRunOld.begin(); i != LifePointRunOld.end(); i++) //заполняем облако
 //	long end = LifePointRunOld.size();
-//	std::unordered_map<LONGLONG, POINT>::iterator i;
+//	std::unordered_map<LONGLONG, Point>::iterator i;
 //	for (i = LifePointRunOld.begin(); i != LifePointRunOld.end(); std::advance(i,2)) //заполняем облако
 //	//for (long i=0; i< end; i++) //заполняем облако
 //	{
@@ -159,13 +165,13 @@ bool Calc::Contains(POINT point, std::unordered_map<LONGLONG, POINT> &LifePoint)
 //	}
 //}
 //
-//void RunNext(std::unordered_map <LONGLONG, POINT> &LifePoint, long t, long treads)
+//void RunNext(std::unordered_map <LONGLONG, Point> &LifePoint, long t, long treads)
 //{
 //			int n[3] = { -1, 0, 1 };
-//			POINT tmpPoint;// = { 0,0 };
+//			Point tmpPoint;// = { 0,0 };
 //			Calc calc;
 //			int L = 0;
-//			std::unordered_map<LONGLONG, POINT>::iterator i;
+//			std::unordered_map<LONGLONG, Point>::iterator i;
 //			for (i = LifePointLoud.begin(); i != LifePointLoud.end(); i++) //считаем новое поколение по облаку
 //			{
 //				for (int y = 0; y < 3; y++) //обработка 9 координат
@@ -230,12 +236,18 @@ void Calc::RunLife()
 		//long treads = std::thread::hardware_concurrency();//Возвращает число одновременно выполняемых потоков, поддерживаемых реализацией
 		Calc calc;
 		long L = 0;
-		POINT tmpPoint;
-		//std::unordered_map<LONGLONG, POINT> LifePointRun;
-		//static std::unordered_map<LONGLONG, POINT> LifePointRunOld;
-		//static std::unordered_map <LONGLONG, POINT> LifePointNew;
-		std::unordered_map <LONGLONG, POINT> LifePointOld;
-		std::unordered_map <LONGLONG, POINT> LifePointLoud;
+		Point tmpPoint;
+		//Point tmpPoint2;
+		//Point tmpPoint3;
+		//std::unordered_map<LONGLONG, Point> LifePointRun;
+		//static std::unordered_map<LONGLONG, Point> LifePointRunOld;
+		//static std::unordered_map <LONGLONG, Point> LifePointNew;
+		std::unordered_map <LONGLONG, Point> LifePointOld;
+		//std::unordered_map <LONGLONG, Point> LifePointLoud;
+		std::unordered_map <LONGLONG, Point> LifePointRunOld;
+		int n[3] = { -1, 0, 1 };
+		int nn[5] = { -2, -1, 0, 1, 2 };
+		
 		//LifePointOld = LifePoint;
 
 		//if (generation==0)
@@ -248,7 +260,7 @@ void Calc::RunLife()
 		//}
 		//LifePointRun.clear();
 		//LifePointLoud.clear();
-		//std::unordered_map<LONGLONG, POINT>::iterator i;
+		//std::unordered_map<LONGLONG, Point>::iterator i;
 		//i = LifePointRunOld.begin(); 
 		//i = LifePointRunOld.end();
 
@@ -262,80 +274,152 @@ void Calc::RunLife()
 		////for (int i = 1; i <= 1; i++) thr[i - 1].detach(); //отделяем потоки
 		//for (int i = 1; i <= treads; i++) thr[i - 1].join(); //ждем все потоки
 		//LifePointOld = LifePoint;
-		if (generation==0)	LifePointRun = LifePoint;
+		//if (generation==0)	LifePointRun = LifePoint;
 		//LifePointOld = LifePoint;
-		std::unordered_map<LONGLONG, POINT>::iterator i;
-		for (i = LifePointRun.begin(); i != LifePointRun.end(); i++) //считаем новое поколение по Run - массиву
-		{
-			for (int y = 0; y < 3; y++) //обработка 9 координат
-			{
-				for (int x = 0; x < 3; x++)
-				{
-					int n[3] = { -1, 0, 1 };
-					tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
-					//LifePointLoud.erase(HashPoint(tmpPoint));
-					LifePointLoud[HashPoint(tmpPoint)] = tmpPoint; //добавить
-					//calc.Insert(tmpPoint, LifePointLoud, false);
-
-				}
-			}
-		}
-
-		LifePointRun.clear();
-		//LifePointNew=LifePoint;
+		//std::unordered_map<LONGLONG, Point>::iterator i;
 		LifePointOld = LifePoint;
-		for (i = LifePointLoud.begin(); i != LifePointLoud.end(); i++) //считаем новое поколение по облаку
-		{
+		LifePointRunOld = LifePointRun;
+		LifePointRun.clear();
+		bool boolTmp[5][5];
 
-			for (int y = 0; y < 3; y++) //обработка 9 координат
-			{
-				for (int x = 0; x < 3; x++)
+		//for (auto& i : LifePointRunOld) //считаем облако по Run - массиву
+		std::unordered_map<LONGLONG, Point>::iterator i;
+		for (i = LifePointRunOld.begin(); i != LifePointRunOld.end(); i++) //считаем новое поколение по облаку
+		{
+			//if (!calc.Contains(i->second, LifePointEnd))
+			//{
+				//забираем данные для быстрой обработки 5*5 с целевой точкой посредине
+				for (int y = 0; y < 5; y++) //обработка 25 координат
 				{
-					if (!(y == 1 && x == 1))
+					for (int x = 0; x < 5; x++)
 					{
-						int n[3] = { -1, 0, 1 };
-						tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
-						if (calc.Contains(tmpPoint, LifePointOld)) L++;
-						if (L > 3) goto nx_; //нет смысла считать более 4 точек вокруг
+						boolTmp[y][x] = calc.Contains({ i->second.x + nn[x], i->second.y + nn[y] }, LifePointOld);
 					}
 				}
-			}
 
-			//EnterCriticalSection(&cs);//критическая секция
-		nx_:
-			tmpPoint = i->second;
-			if (L < 2|| L > 3)
-			{
-				if (calc.Contains(tmpPoint, LifePointOld)) //если точка была
+				//обработка 8 координат по каждой из 8 координат
+				for (int y = 0; y < 3; y++) // проходка по временному массиву 5*5
 				{
-					//calc.Insert(i->second, LifePoint, true);
-					//calc.Insert(i->second, LifePointRun, false);
-					LifePoint.erase(HashPoint(tmpPoint)); //удалить
-					LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
+					for (int x = 0; x < 3; x++)
+					{
+						//if (!(y == 1 && x == 1))//не считаем саму себя
+						//{
+							//tmpPoint2 = { 2 + n[y],  2 + n[x] };//точки вокруг целевой(точка 2*2 во временном массиве)
+
+						for (int yy = 0; yy < 3; yy++) // проходка по каждой точке временного массива 5*5/8 соседних
+						{
+							for (int xx = 0; xx < 3; xx++)
+							{
+								if (!(yy == 1 && xx == 1))//не считаем саму себя
+								{
+									//tmpPoint3 = { (2 + n[x]) + n[xx], (2 + n[y]) + n[yy] };//точка внутри временного массива
+									if (boolTmp[2 + n[y] + n[yy]][2 + n[x] + n[xx]]) L++;
+									if (L > 3) goto nx_; //нет смысла считать более 4 точек вокруг
+								}
+							}
+						}
+
+					nx_:
+						tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
+						//LifePointEnd[HashPoint(tmpPoint)] = tmpPoint; //добавить уже обработанные ячейки
+						if (L < 2 || L > 3)
+						{
+
+							if (boolTmp[2 + n[y]][2 + n[x]]) //если точка была
+							{
+								LifePoint.erase(HashPoint(tmpPoint)); //удалить
+								LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
+							}
+						}
+						else if (L == 3)
+						{
+							if (!boolTmp[2 + n[y]][2 + n[x]]) //если точки не было
+							{
+
+								calc.Insert(tmpPoint, LifePoint, false);
+							}
+						}
+						L = 0;
+
+						//}
+					}
 				}
-			}
-			else if (L == 3)
-			{
-				if (!calc.Contains(tmpPoint, LifePointOld)) //если точки не было
-				{
-					//calc.Insert(i->second, LifePoint, false);
-					//calc.Insert(i->second, LifePointRun, false);
-					//LifePoint[HashPoint(tmpPoint)] = tmpPoint; //добавить
-					//LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
-					calc.Insert(tmpPoint, LifePoint, false);
-				}
-			}
+
+			//}
+		}
+		//LifePointEnd.clear();
+		++generation;
+
+
+		//for (int y = 0; y < 3; y++) //обработка 9 координат
+//{
+//	for (int x = 0; x < 3; x++)
+//	{
+//		tmpPoint = { i.second.x + n[x], i.second.y + n[y] };
+//		//LifePointLoud.erase(HashPoint(tmpPoint));
+//		LifePointLoud[HashPoint(tmpPoint)] = tmpPoint; //добавить
+//		//calc.Insert(tmpPoint, LifePointLoud, false);
+
+//	}
+//}
+
+
+		//LifePointRun.clear();
+		//LifePointNew=LifePoint;
+	
+		//for (auto& i : LifePointLoud) //считаем новое поколение по облаку
+		//{
+
+		//	for (int y = 0; y < 3; y++) //обработка 9 координат
+		//	{
+		//		for (int x = 0; x < 3; x++)
+		//		{
+		//			if (!(y == 1 && x == 1))
+		//			{
+		//				tmpPoint = { i.second.x + n[x], i.second.y + n[y] };
+		//				if (calc.Contains(tmpPoint, LifePointOld)) L++;
+		//				if (L > 3) goto nx_; //нет смысла считать более 4 точек вокруг
+		//			}
+		//		}
+		//	}
+
+		//	//EnterCriticalSection(&cs);//критическая секция
+		//nx_:
+		//	
+		//	if (L < 2|| L > 3)
+		//	{
+		//		tmpPoint = i.second;
+		//		if (calc.Contains(tmpPoint, LifePointOld)) //если точка была
+		//		{
+		//			//calc.Insert(i->second, LifePoint, true);
+		//			//calc.Insert(i->second, LifePointRun, false);
+		//			LifePoint.erase(HashPoint(tmpPoint)); //удалить
+		//			LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
+		//		}
+		//	}
+		//	else if (L == 3)
+		//	{
+		//		tmpPoint = i.second;
+		//		if (!calc.Contains(tmpPoint, LifePointOld)) //если точки не было
+		//		{
+		//			//calc.Insert(i->second, LifePoint, false);
+		//			//calc.Insert(i->second, LifePointRun, false);
+		//			//LifePoint[HashPoint(tmpPoint)] = tmpPoint; //добавить
+		//			//LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
+		//			calc.Insert(tmpPoint, LifePoint, false);
+		//		}
+		//	}
 
 			//LeaveCriticalSection(&cs);//критическая секция
-			L = 0;
+			//L = 0;
 
-		}
+		//}
 		//LifePoint=LifePointNew;
 		//LifePoint = LifePointTmp;
 		//long cz = LifePoint.size();
 		//long cz2 = LifePoint.size();
 		//long cz3 = LifePoint.size();
-		++generation;
+		//++generation;
 		//DeleteCriticalSection(&cs);
 	//}
 }

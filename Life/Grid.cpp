@@ -26,9 +26,9 @@ void Grid::Move(long x, long y)
 }
 
 
-POINT Grid::GetCell(POINT hDCPosition)
+Point Grid::GetCell(Point hDCPosition)
 {
-	POINT res;
+	Point res;
 	long xTmp = (hDCPosition.x - position.x);
 	long yTmp = (hDCPosition.y - position.y);
 	if (xTmp < 0) //при отрицательных координатах округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
@@ -48,7 +48,7 @@ POINT Grid::GetCell(POINT hDCPosition)
 }
 
 
-void Grid::Draw(HDC hDC, POINT size)
+void Grid::Draw(HDC hDC, Point size)
 {
 	HPEN hPen, OldPen; //ќбъ€вл€етс€ перо
 
@@ -124,7 +124,7 @@ void Grid::FillRectangle(HDC hDC, Calc calc)
 {
 	HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаЄм сплошную кисть, закрашенную цветом RGB - черный
 
-	std::unordered_map<LONGLONG, POINT>::iterator i;
+	std::unordered_map<LONGLONG, Point>::iterator i;
 
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
 	{
@@ -134,7 +134,7 @@ void Grid::FillRectangle(HDC hDC, Calc calc)
 	DeleteObject(s);
 }
 
-void Grid::DrawRect(HDC hDC, HBRUSH s, POINT pos)
+void Grid::DrawRect(HDC hDC, HBRUSH s, Point pos)
 {
 
 	RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
