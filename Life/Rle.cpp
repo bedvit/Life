@@ -8,8 +8,6 @@
 #include <algorithm>
 
 
-
-
 Rle::Rle()
 {
 }

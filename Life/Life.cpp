@@ -43,13 +43,15 @@ Point calcPoint;
 static int wheelDelta = 0; // $$$$$ требуется для считывания колесика мышки
 bool DragEnabled; // $$$$$ Для таскания грида правой кнопкой мыши
 bool LbuttonClick; // $$$$$ Для выделения ячеек левой кнопкой мыши
-bool LifeInvert; // $$$$$ Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
+bool pointDelete; // $$$$$ Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
 unsigned int start_time; // = clock();
 unsigned int end_time; // = clock(); // конечное время
 unsigned int search_time; // = end_time - start_time; // искомое время
 unsigned int pre_time; //
 unsigned int generation_time; //
-//unsigned int generation_timeOld;
+unsigned int start_timeNew;
+unsigned int search_timeNew;
+unsigned int GenerationFix;
 
 HWND hWndEdit;
 //открыть файл
@@ -246,7 +248,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_START:
 					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
 					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
+					start_timeNew = clock();
 					start_time = clock()- search_time;
+					GenerationFix = calc.Generation();
 					//RunCalc = true;
 				//if (!RunCalc)
 				//{
@@ -267,6 +271,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				KillTimer(hWnd, 123);
 				calc.DelLife();
 				search_time = 0;
+				GenerationFix = 0;
 				grid.position = {0,0}; // позиция начала координат сетки относительно левого верхнего угла окна в пискселях
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
@@ -277,6 +282,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				KillTimer(hWnd, 123);
 				calc.DelLife();
 				search_time = 0;
+				GenerationFix = 0;
 				grid.position = { 0,0 }; // позиция начала координат сетки относительно левого верхнего угла окна в пискселях
 
 				ZeroMemory(&ofn, sizeof(ofn));
@@ -332,7 +338,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				calc.RunLife();
 				end_time = clock(); // конечное время
 				search_time = end_time - start_time; // искомое время
-				//generation_timeOld = generation_time;
+				search_timeNew = end_time - start_timeNew;
 				generation_time = end_time - pre_time; //
 				pre_time = end_time; // конечное время
 			//}
@@ -465,8 +471,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DrawText(hMemDC, TEXT("Поколений/сек."), -1, &rectTxt, DT_NOCLIP);
 			Ystart += 20;
 			int out = 0;
-			if (generation_time != 0) out = (1000 / (generation_time));// каждый ход новое значение
-			//if(generation_time != 0) out=(2000/(generation_time + generation_timeOld));// каждый ход новое значение - усредненное по двум
+			//if (generation_time != 0) out = (1000 / (generation_time));// каждый ход новое значение
+			if(search_timeNew != 0) out=((calc.Generation()- GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
 			//if (calc.Generation() != 0) out = (calc.Generation()*1000/search_time); //накопительно за все время выполнения
 			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
 			_itow_s(out, buffer, 255, 10);
@@ -501,10 +507,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		mousePos.x = xPos;  // $$$$$ Запомним координаты мыши
 		mousePos.y = yPos;
 		calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-		if (calc.Contains(calcPoint, calc.LifePoint)) LifeInvert = true; else LifeInvert = false; //смотрим есть ли такой элемент
+		if (calc.Contains(calcPoint, calc.LifePoint)) pointDelete = true; else pointDelete = false; //смотрим есть ли такой элемент
 		mousePosPoint.x = calcPoint.x;
 		mousePosPoint.y = calcPoint.y;
-		calc.Insert(calcPoint, calc.LifePoint, LifeInvert);
+		calc.Insert(calcPoint, calc.LifePoint, pointDelete);
 		InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 		break;
 
@@ -556,7 +562,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					mousePosPoint.x = calcPoint.x;
 					mousePosPoint.y = calcPoint.y;
-					calc.Insert(calcPoint, calc.LifePoint, LifeInvert);
+					calc.Insert(calcPoint, calc.LifePoint, pointDelete);
 						
 				}
 			}

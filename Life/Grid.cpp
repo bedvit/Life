@@ -128,7 +128,10 @@ void Grid::FillRectangle(HDC hDC, Calc calc)
 
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
 	{
-		DrawRect(hDC, s, i->second);
+		if (i->second.life) 
+		{
+			DrawRect(hDC, s, i->second);
+		}
 	}
 
 	DeleteObject(s);
@@ -136,7 +139,6 @@ void Grid::FillRectangle(HDC hDC, Calc calc)
 
 void Grid::DrawRect(HDC hDC, HBRUSH s, Point pos)
 {
-
 	RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
 	r.left = pos.x * scale + position.x; //X-координата верхнего левого угла пр€моугольника.
 	r.top = pos.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла пр€моугольника.
