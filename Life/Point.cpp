@@ -8,6 +8,7 @@ Point::Point()
 	y=0;
 	state = 0;
 	life = false;
+	update = 0;
 }
 
 Point::Point(long x, long y)
@@ -16,6 +17,7 @@ Point::Point(long x, long y)
 	this->y = y;
 	this->state = 0;
 	this->life = false;
+	this->update = 0;
 }
 
 Point::Point(long x,long y,char state)
@@ -24,6 +26,7 @@ Point::Point(long x,long y,char state)
 	this->y = y;
 	this->state = state;
 	this->life = false;
+	this->update = 0;
 }
 
 Point::Point(long x, long y, char state, bool life)
@@ -32,8 +35,17 @@ Point::Point(long x, long y, char state, bool life)
 	this->y = y;
 	this->state = state;
 	this->life = life;
+	this->update = 0;
 }
 
+Point::Point(long x, long y, char state, bool life, char update)
+{
+	this->x = x;
+	this->y = y;
+	this->state = state;
+	this->life = life;
+	this->update = update;
+}
 
 Point::~Point()
 {

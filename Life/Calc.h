@@ -14,6 +14,7 @@ public:
 	~Calc();
 	LONGLONG HashPoint(Point point);
 	void Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete);
+	void InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool pointDelete);
 	bool Contains(Point point, std::unordered_map <LONGLONG, Point> &LifePoint);
 	void RunLife();
 	void DelLife();

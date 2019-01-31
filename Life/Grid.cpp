@@ -120,32 +120,40 @@ void Grid::DecScale(long x, long y)
 	position.x = x - zx * scale; // Новые координаты центра грида 
 	position.y = y - zy * scale;
 }
-void Grid::FillRectangle(HDC hDC, Calc calc)
+void Grid::FillRectangle(HDC hDC, Calc &calc)
 {
 	HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаём сплошную кисть, закрашенную цветом RGB - черный
-
+	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
 	std::unordered_map<LONGLONG, Point>::iterator i;
 
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
 	{
 		if (i->second.life) 
 		{
-			DrawRect(hDC, s, i->second);
+			//DrawRect(hDC, s, i->second);
+			
+			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
+			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
+			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
+			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
+
+			//Заполняем прямоугольник
+			FillRect(hDC, &r, s); //жрёт 50% процессороного времени
 		}
 	}
 
 	DeleteObject(s);
 }
 
-void Grid::DrawRect(HDC hDC, HBRUSH s, Point pos)
-{
-	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
-	r.left = pos.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
-	r.top = pos.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
-	r.right = (pos.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
-	r.bottom = (pos.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
-
-	//Заполняем прямоугольник
-	FillRect(hDC, &r, s);
-}
+//void Grid::DrawRect(HDC hDC, HBRUSH s, Point pos)
+//{
+//	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+//	r.left = pos.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
+//	r.top = pos.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
+//	r.right = (pos.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
+//	r.bottom = (pos.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
+//
+//	//Заполняем прямоугольник
+//	FillRect(hDC, &r, s);
+//}
 

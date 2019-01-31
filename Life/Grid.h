@@ -18,7 +18,7 @@ public:
 	void Move(long x, long y); // Сдвигает грид на x пикселей вправо и y вверх
 	void AddScale(long x, long y); // Увеличить масштаб отталкиваясь от точки x, y
 	void DecScale(long x, long y); // Уменьшить масштаб отталкиваясь от точки x, y
-	void FillRectangle(HDC hDC, Calc calc); //Закрашмваем многоугольник
+	void FillRectangle(HDC hDC, Calc& calc); //Закрашмваем многоугольник
 	
 	Point GetCell(Point); // Получить координаты точки 
 	void DrawRect(HDC, HBRUSH, Point);
