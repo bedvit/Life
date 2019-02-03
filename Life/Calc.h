@@ -19,6 +19,7 @@ public:
 	void RunLife();
 	void DelLife();
 	long Generation();
+	long population;
 	//long& Generation2;
 	//bool& Pause();
 	long AreaXmin();

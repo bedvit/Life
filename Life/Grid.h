@@ -2,6 +2,7 @@
 //#include "Point.h"
 #include "Calc.h"
 #include "Point.h"
+#include <d2d1.h>
 
 class Grid
 {
@@ -19,9 +20,10 @@ public:
 	void AddScale(long x, long y); // Увеличить масштаб отталкиваясь от точки x, y
 	void DecScale(long x, long y); // Уменьшить масштаб отталкиваясь от точки x, y
 	void FillRectangle(HDC hDC, Calc& calc); //Закрашмваем многоугольник
+	void FillRectangle2(ID2D1HwndRenderTarget* pRT, ID2D1SolidColorBrush* pBlackBrush, Calc& calc);
 	
 	Point GetCell(Point); // Получить координаты точки 
-	void DrawRect(HDC, HBRUSH, Point);
+	//void DrawRect(HDC, HBRUSH, Point);
 
 
 

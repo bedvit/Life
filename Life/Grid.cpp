@@ -130,8 +130,6 @@ void Grid::FillRectangle(HDC hDC, Calc &calc)
 	{
 		if (i->second.life) 
 		{
-			//DrawRect(hDC, s, i->second);
-			
 			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
 			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
 			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
@@ -139,21 +137,39 @@ void Grid::FillRectangle(HDC hDC, Calc &calc)
 
 			//Заполняем прямоугольник
 			FillRect(hDC, &r, s); //жрёт 50% процессороного времени
+			//Rectangle(hDC, r.left, r.top, r.right, r.bottom);
 		}
 	}
-
 	DeleteObject(s);
 }
 
-//void Grid::DrawRect(HDC hDC, HBRUSH s, Point pos)
-//{
-//	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
-//	r.left = pos.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
-//	r.top = pos.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
-//	r.right = (pos.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
-//	r.bottom = (pos.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
-//
-//	//Заполняем прямоугольник
-//	FillRect(hDC, &r, s);
-//}
 
+void Grid::FillRectangle2(ID2D1HwndRenderTarget* pRT, ID2D1SolidColorBrush* pBlackBrush, Calc &calc)
+{
+	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаём сплошную кисть, закрашенную цветом RGB - черный
+	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+	std::unordered_map<LONGLONG, Point>::iterator i;
+
+	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
+	{
+		if (i->second.life)
+		{
+			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
+			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
+			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
+			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
+
+			pRT->BeginDraw();
+
+					pRT->DrawRectangle(
+						D2D1::RectF(
+							r.left,
+							r.top,
+							r.right,
+							r.bottom),
+						pBlackBrush);
+		pRT->EndDraw();
+		}
+	}
+	//DeleteObject(s);
+}

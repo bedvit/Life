@@ -3,8 +3,10 @@
 #include <unordered_map>
 #include <map>
 
+#define SIZE_ARRAY 1000000
 
-static long generation=0;
+static long generation = 0;
+//static long population = 0;
 static long areaXmin= LONG_MAX;
 static long areaYmin= LONG_MAX;
 static long areaXmax= LONG_MIN;
@@ -19,6 +21,7 @@ long LifePointRunSizeTmp;
 
 Calc::Calc()
 {
+//Calc:population = population;
 }
 
 LONGLONG Calc::HashPoint(Point point)
@@ -71,11 +74,12 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				{ 
 					if (i != LifePoint.end()) // если такая точка есть (для удаляемой точки)
 					{
+						population--;
 						i->second.life = false;
 						i->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
+							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
 						if (i->second.update == 1)LifePointRun[++LifePointRunSize - 1] = i;
@@ -92,7 +96,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 						iTmp->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
+							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
 						if (iTmp->second.update==1)LifePointRun[++LifePointRunSize - 1] = iTmp;
@@ -109,14 +113,15 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 			{
 				if (y == 1 && x == 1)//считаем саму себя
 				{
-						i->second.life = true;
-						i->second.update++;
-						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
-						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
-							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
-						}
-						if (i->second.update == 1)LifePointRun[++LifePointRunSize - 1] = i;
+					population++;
+					i->second.life = true;
+					i->second.update++;
+					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
+					{
+						LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
+						LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
+					}
+					if (i->second.update == 1)LifePointRun[++LifePointRunSize - 1] = i;
 				}
 				else
 				{	//считаем окружающие
@@ -131,7 +136,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 						iTmp->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
+							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
 						if (iTmp->second.update == 1)LifePointRun[++LifePointRunSize - 1] = iTmp;
@@ -142,7 +147,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 						iTmp->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
+							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
 						if (iTmp->second.update == 1)LifePointRun[++LifePointRunSize - 1] = iTmp;
@@ -177,7 +182,7 @@ void Calc::RunLife()
 			LifePointRun[j]->second.life = true;
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
 			{
-				LifePointRunSizeNew = LifePointRunSizeNew + 10000;
+				LifePointRunSizeNew = LifePointRunSizeNew + SIZE_ARRAY;
 				LifePointRunNew.resize(LifePointRunSizeNew); //увеличиваем размер массива, если не хватает
 			}
 			LifePointRunNew[++LifePointRunSizeTmp-1]= LifePointRun[j];
@@ -187,7 +192,7 @@ void Calc::RunLife()
 			LifePointRun[j]->second.life = false;
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
 			{
-				LifePointRunSizeNew = LifePointRunSizeNew + 10000;
+				LifePointRunSizeNew = LifePointRunSizeNew + SIZE_ARRAY;
 				LifePointRunNew.resize(LifePointRunSizeNew); //увеличиваем размер массива, если не хватает
 			}
 			LifePointRunNew[++LifePointRunSizeTmp - 1] = LifePointRun[j];
@@ -208,7 +213,7 @@ void Calc::RunLife()
 	}
 	
 		//удаляем пустые точки (если в массиве size больше 1 млн)
-	if (LifePoint.size() > 1000000)
+	if (LifePoint.size() > SIZE_ARRAY)
 	{
 		std::vector<std::unordered_map<LONGLONG, Point>::iterator> NullPoint(LifePoint.size());
 		long NullPointSize = 0;
@@ -379,6 +384,7 @@ void Calc::DelLife()
 {
 	this->LifePoint.clear();
 	generation = 0;
+	population = 0;
 	LifePointRunSize = 0;
 	LifePointRunSizeTmp = 0;
 	areaXmin = LONG_MAX;
