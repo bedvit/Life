@@ -122,7 +122,7 @@ void Grid::DecScale(long x, long y)
 }
 void Grid::FillRectangle(HDC hDC, Calc &calc)
 {
-	HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаЄм сплошную кисть, закрашенную цветом RGB - черный
+	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаЄм сплошную кисть, закрашенную цветом RGB - черный
 	RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
 	std::unordered_map<LONGLONG, Point>::iterator i;
 
@@ -136,40 +136,49 @@ void Grid::FillRectangle(HDC hDC, Calc &calc)
 			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла пр€моугольника.
 
 			//«аполн€ем пр€моугольник
-			FillRect(hDC, &r, s); //жрЄт 50% процессороного времени
-			//Rectangle(hDC, r.left, r.top, r.right, r.bottom);
-		}
-	}
-	DeleteObject(s);
-}
+			InvertRect(hDC, &r); //42
+			//DrawFocusRect(hDC, &r); //жрЄт 50% процессороного времени //23
+			//FillRect(hDC, &r, s); //жрЄт 50% процессороного времени //30
+			//Rectangle(hDC, r.left, r.top, r.right, r.bottom); //27
 
+			//через строку
+			//MoveToEx(hDC, r.left, r.top, NULL);  // ƒл€ теста 27
+			//LineTo(hDC, r.right, r.bottom);
 
-void Grid::FillRectangle2(ID2D1HwndRenderTarget* pRT, ID2D1SolidColorBrush* pBlackBrush, Calc &calc)
-{
-	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаЄм сплошную кисть, закрашенную цветом RGB - черный
-	RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
-	std::unordered_map<LONGLONG, Point>::iterator i;
+			//SetPixel(hDC, r.left, r.top, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет //27
 
-	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
-	{
-		if (i->second.life)
-		{
-			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла пр€моугольника.
-			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла пр€моугольника.
-			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла пр€моугольника.
-			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла пр€моугольника.
-
-			pRT->BeginDraw();
-
-					pRT->DrawRectangle(
-						D2D1::RectF(
-							r.left,
-							r.top,
-							r.right,
-							r.bottom),
-						pBlackBrush);
-		pRT->EndDraw();
 		}
 	}
 	//DeleteObject(s);
 }
+
+
+//void Grid::FillRectangle2(ID2D1HwndRenderTarget* pRT, ID2D1SolidColorBrush* pBlackBrush, Calc &calc)
+//{
+//	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаЄм сплошную кисть, закрашенную цветом RGB - черный
+//	RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
+//	std::unordered_map<LONGLONG, Point>::iterator i;
+//
+//	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
+//	{
+//		if (i->second.life)
+//		{
+//			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла пр€моугольника.
+//			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла пр€моугольника.
+//			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла пр€моугольника.
+//			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла пр€моугольника.
+//
+//			pRT->BeginDraw();
+//
+//					pRT->DrawRectangle(
+//						D2D1::RectF(
+//							r.left,
+//							r.top,
+//							r.right,
+//							r.bottom),
+//						pBlackBrush);
+//		pRT->EndDraw();
+//		}
+//	}
+//	//DeleteObject(s);
+//}
