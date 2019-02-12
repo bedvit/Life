@@ -37,7 +37,7 @@ Point size; // $$$$$ Сюда будем присваивать размеры �
 Point mousePos; // $$$$$ Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
 Point mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 Point calcPoint;
-					 //HWND hWnd;
+//HWND hWnd;
 
 //bool RunCalc=false; //запустить расчет жизни 
 //bool CalcEnd=false; //вычисления закончены - готов расчет нового поколения
@@ -66,16 +66,16 @@ wchar_t buffer[255]; //результат для инфо панели
 char vOutChar[255];
 HFONT hFont = CreateFont(16, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Segoe UI"));
 
-//DirectX2D
-template <class T>
-void SafeRelease(T **ppT)
-{
-	if (*ppT)
-	{
-		(*ppT)->Release();
-		*ppT = NULL;
-	}
-}
+////DirectX2D
+//template <class T>
+//void SafeRelease(T **ppT)
+//{
+//	if (*ppT)
+//	{
+//		(*ppT)->Release();
+//		*ppT = NULL;
+//	}
+//}
 ////////////////////////////
 
 // Отправить объявления функций, включенных в этот модуль кода:
@@ -172,7 +172,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    
    //создаем свое меню
    RECT rect = { 0 };
-   //GetWindowRect(hWnd, &rect); в координатах экрана
+  // GetWindowRect(hWnd, &rect); //в координатах экрана
   GetClientRect(hWnd, &rect); //в координатах пользовательского окна
    
    //HWND Panel1 = CreateWindowEx(WS_EX_WINDOWEDGE , L"STATIC", L"Panel 1",  WS_CHILD | WS_VISIBLE , 100, 0, 1000, 20, hWnd, (HMENU)NULL, GetModuleHandle(0), (LPVOID)NULL);
@@ -262,8 +262,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_START:
 					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
 					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
-					start_timeNew = clock();
+			
 					start_time = clock()- search_time;
+					start_timeNew = clock();
 					GenerationFix = calc.Generation();
 					//RunCalc = true;
 				//if (!RunCalc)
@@ -348,6 +349,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//{
 				//CalcEnd = false;
 				//calc.RunLife(RunCalc, CalcEnd, Pause);
+
+				//// расчет каждые 10 ходов
+				//if (GenerationFix < (calc.Generation()-50))
+				//{
+				//	start_timeNew = clock();
+				//	GenerationFix = calc.Generation();
+				//}
+				////
 				calc.RunLife();
 				end_time = clock(); // конечное время
 				search_time = end_time - start_time; // искомое время
@@ -373,7 +382,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			HBITMAP oldBmp = (HBITMAP)SelectObject(hMemDC, hScreen);
 			PatBlt(hMemDC, 0, 0, size.x, size.y, WHITENESS);
 			grid.Draw(hMemDC, size);// $$$$$ Скажем гриду, чтобы нарисовал себя в рамках размеров клиентского окна
-			grid.FillRectangle(hMemDC, calc);//Заполняем клетки
+			grid.FillRectangle(hMemDC, calc, rect);//Заполняем клетки
 			//
 
 
@@ -558,12 +567,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
 			DrawText(hMemDC, TEXT("Поколений/сек."), -1, &rectTxt, DT_NOCLIP);
 			Ystart += 20;
-			int out = 0;
+			double out = 0.0;
 			//if (generation_time != 0) out = (1000 / (generation_time));// каждый ход новое значение
-			if(search_timeNew != 0) out=((calc.Generation()- GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
+			if(search_timeNew != 0) out=((double)((calc.Generation()- GenerationFix) * 1000) / search_timeNew);// накопительным итогом на каждый запуск
 			//if (calc.Generation() != 0) out = (calc.Generation()*1000/search_time); //накопительно за все время выполнения
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			_itow_s(out, buffer, 255, 10);
+			SetRect(&rectTxt, Xstart, Ystart, 0, 0);//целые
+			_gcvt_s(vOutChar, sizeof(vOutChar), out, 5);
+			mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
+			//_itow_s(out, buffer, 255, 10);//целые
 			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
 
 
@@ -669,13 +680,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP: // $$$$$ Правая кнопка отжата
 		DragEnabled = false; // $$$$$ Выключим режим таскания. Если не выключить, сетка будет вечно ходить за мышкой.
 		//Pause = false;
+		start_timeNew = clock(); //пересчитываем скорость поколений из-за задержки
+		GenerationFix = calc.Generation();
 		break;
 	case WM_LBUTTONUP: // $$$$$ Левая кнопка отжата
 		LbuttonClick = false; // $$$$$ Выключим режим выделения клеток. 
 		//Pause = false;
+		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
+		GenerationFix = calc.Generation();
 		break;
 	case WM_ERASEBKGND://фон окна должен быть стерт (например, когда окно изменено)
-
+		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
+		GenerationFix = calc.Generation();
 		return true;
 
 	case WM_MOUSEWHEEL: // $$$$$ Колесо мышки
@@ -696,6 +712,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			grid.DecScale(p.x, p.y);
 			InvalidateRect(hWnd, NULL, false);
 		}
+		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
+		GenerationFix = calc.Generation();
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

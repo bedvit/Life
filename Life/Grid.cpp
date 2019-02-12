@@ -8,8 +8,8 @@
 
 Grid::Grid()
 {
-	position.x = 0;
-	position.y = 0;
+	position.x = 0;//центр
+	position.y = 0;//центр
 	scale = 15; // По-умолчанию ширина клетки 15 пикселей
 
 }
@@ -120,9 +120,12 @@ void Grid::DecScale(long x, long y)
 	position.x = x - zx * scale; // Новые координаты центра грида 
 	position.y = y - zy * scale;
 }
-void Grid::FillRectangle(HDC hDC, Calc &calc)
+void Grid::FillRectangle(HDC hDC, Calc &calc, RECT& rect)
 {
 	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаём сплошную кисть, закрашенную цветом RGB - черный
+	//RECT rect;
+	//HWND hWnd = WindowFromDC(hDC);
+	//GetClientRect(hWnd, &rect);
 	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
 	std::unordered_map<LONGLONG, Point>::iterator i;
 
@@ -130,13 +133,18 @@ void Grid::FillRectangle(HDC hDC, Calc &calc)
 	{
 		if (i->second.life) 
 		{
+			//if ()
+			//{
 			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
 			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
 			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
 			r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
 
 			//Заполняем прямоугольник
-			InvertRect(hDC, &r); //42
+			if (r.right >= rect.left && r.bottom >= rect.top && r.left <= rect.right && r.top <= rect.bottom)
+			{
+				InvertRect(hDC, &r); //42
+			}
 			//DrawFocusRect(hDC, &r); //жрёт 50% процессороного времени //23
 			//FillRect(hDC, &r, s); //жрёт 50% процессороного времени //30
 			//Rectangle(hDC, r.left, r.top, r.right, r.bottom); //27
