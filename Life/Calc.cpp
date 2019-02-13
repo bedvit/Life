@@ -37,7 +37,7 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, Point> &LifePoint)
 	return i->second.life;
 	//return (i != LifePoint.end()) && i->second.life;
 }
-void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete) //сщздаем для точки итератор
+void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete) //сОздаем для точки итератор
 {
 	Point pointTmp = { point.x,point.y};
 	const LONGLONG hashPoint = HashPoint(pointTmp);
@@ -46,15 +46,24 @@ void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, 
 	//typedef std::unordered_map<std::string, int>::iterator iter;
 	//const std::pair< iter, bool> result;
 	//auto result2;
-	if (!pointDelete)
+	if (pointDelete) //если удаляем
 	{
-		if (i == LifePoint.end())
+		if (i != LifePoint.end() && i->second.life==true) InsertRun(i, pointDelete); //удаляем если есть такая точка и она живая
+	}
+	else //если добавляем
+	{
+		if (i == LifePoint.end())//если такой точки нет - создаем
 		{
 			//i = LifePoint.emplace(std::pair<LONGLONG, Point>({ hashPoint ,(Point)pointTmp }));
 			i = LifePoint.emplace(hashPoint, pointTmp).first;
+			InsertRun(i, pointDelete);
+		}
+		else //если есть
+		{
+			if (i->second.life == false) InsertRun(i, pointDelete); //создаем если не было живой
 		}
 	}
-	InsertRun(i, pointDelete);
+	
 }
 void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool pointDelete) //расчет по итераторам
 {
@@ -177,7 +186,7 @@ void Calc::RunLife()
 	for (long j = 0; j < LifePointRunSize; j++) //считаем новое поколение по RUN
 	{
 		LifePointRun[j]->second.update = 0;
-		if (LifePointRun[j]->second.state == 3 && LifePointRun[j]->second.life ==false)
+		if (LifePointRun[j]->second.state == 3 && LifePointRun[j]->second.life ==false)//добавляем
 		{
 			LifePointRun[j]->second.life = true;
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
@@ -187,7 +196,7 @@ void Calc::RunLife()
 			}
 			LifePointRunNew[++LifePointRunSizeTmp-1]= LifePointRun[j];
 		}
-		else if((LifePointRun[j]->second.state > 3 || LifePointRun[j]->second.state < 2) && LifePointRun[j]->second.life == true)
+		else if((LifePointRun[j]->second.state > 3 || LifePointRun[j]->second.state < 2) && LifePointRun[j]->second.life == true)//удаляем
 		{
 			LifePointRun[j]->second.life = false;
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
