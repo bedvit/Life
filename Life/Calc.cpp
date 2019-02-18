@@ -394,6 +394,7 @@ void Calc::RunLife()
 void Calc::DelLife()
 {
 	this->LifePoint.clear();
+	this->LifePointOut.clear();
 	generation = 0;
 	population = 0;
 	LifePointRunSize = 0;
