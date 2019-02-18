@@ -8,7 +8,7 @@ class Calc
 public:
 	
 	std::unordered_map <LONGLONG, Point> LifePoint;
-	//std::unordered_map <LONGLONG,Point> loudLifePoint;
+	std::unordered_map <LONGLONG, Point> LifePointOut;
 
 	Calc();
 	~Calc();

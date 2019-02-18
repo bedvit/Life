@@ -4,13 +4,18 @@
 #include "Calc.h"
 #include <unordered_map>
 //#include <concurrent_unordered_map.h>
-#include <map>
+//#include <map>
+//#include <vector>
+
+//static std::vector<RECT> vec;
+//long vecSize = 0;
 
 Grid::Grid()
 {
 	position.x = 0;//центр
 	position.y = 0;//центр
 	scale = 15; // По-умолчанию ширина клетки 15 пикселей
+	//vec.resize(1000000);
 
 }
 
@@ -128,13 +133,12 @@ void Grid::FillRectangle(HDC hDC, Calc &calc, RECT& rect)
 	//GetClientRect(hWnd, &rect);
 	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
 	std::unordered_map<LONGLONG, Point>::iterator i;
+	//vecSize = -1;
 
-	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
+	for (i = calc.LifePointOut.begin(); i != calc.LifePointOut.end(); i++)
 	{
-		if (i->second.life) 
-		{
-			//if ()
-			//{
+		//if (i->second.life) 
+		//{
 			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
 			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
 			r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
@@ -143,21 +147,26 @@ void Grid::FillRectangle(HDC hDC, Calc &calc, RECT& rect)
 			//Заполняем прямоугольник
 			if (r.right >= rect.left && r.bottom >= rect.top && r.left <= rect.right && r.top <= rect.bottom)
 			{
-				InvertRect(hDC, &r); //42
+				//vecSize++;
+	//		//	//if (vecSize>= vec.size()) vec.resize(1000000);
+	//		//	//vec[vecSize]=r;
+
+			InvertRect(hDC, &r); //42
 			}
-			//DrawFocusRect(hDC, &r); //жрёт 50% процессороного времени //23
-			//FillRect(hDC, &r, s); //жрёт 50% процессороного времени //30
-			//Rectangle(hDC, r.left, r.top, r.right, r.bottom); //27
+	//		//DrawFocusRect(hDC, &r); //жрёт 50% процессороного времени //23
+	//		//FillRect(hDC, &r, s); //жрёт 50% процессороного времени //30
+	//		//Rectangle(hDC, r.left, r.top, r.right, r.bottom); //27
 
-			//через строку
-			//MoveToEx(hDC, r.left, r.top, NULL);  // Для теста 27
-			//LineTo(hDC, r.right, r.bottom);
+	//		//через строку
+	//		//MoveToEx(hDC, r.left, r.top, NULL);  // Для теста 27
+	//		//LineTo(hDC, r.right, r.bottom);
 
-			//SetPixel(hDC, r.left, r.top, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет //27
-
-		}
+	//		//SetPixel(hDC, r.left, r.top, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет //27
+		//}
 	}
 	//DeleteObject(s);
+
+
 }
 
 

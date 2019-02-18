@@ -85,6 +85,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 					{
 						population--;
 						i->second.life = false;
+						LifePointOut.erase(i->first);//удяляем в массиве для вывода
 						i->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
@@ -124,6 +125,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				{
 					population++;
 					i->second.life = true;
+					LifePointOut.emplace(i->first, i->second);//добавляем в массиве для вывода
 					i->second.update++;
 					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 					{
