@@ -228,11 +228,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// $$$$$ Получим координаты мыши в рамках клиентского окна 
 	// $$$$$ Клиентское окно или вьюпорт это рабочая область формы (без рамки, заголовка и меню).
 
-	Point p;
+	//Point p;
+	POINT p;
 	p.x = xPos;
 	p.y = yPos;
-	POINT P;
-	ScreenToClient(hWnd, &P); // $$$$$ Спец функция для этого 
+	ScreenToClient(hWnd, &p); // $$$$$ Спец функция для этого 
 
 	//wchar_t* buf = new wchar_t[255];
 	////HWND hWndEdit;
