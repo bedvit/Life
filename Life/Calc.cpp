@@ -2,26 +2,42 @@
 #include "Calc.h"
 #include <unordered_map>
 #include <map>
+#include <thread>
 
 #define SIZE_ARRAY 1000000
 
 static long generation = 0;
+//static long generationOld = 0;
 //static long population = 0;
-static long areaXmin= LONG_MAX;
-static long areaYmin= LONG_MAX;
-static long areaXmax= LONG_MIN;
-static long areaYmax= LONG_MIN;
+//static long areaXmin= LONG_MAX;
+//static long areaYmin= LONG_MAX;
+//static long areaXmax= LONG_MIN;
+//static long areaYmax= LONG_MIN;
+//static std::unordered_map <LONGLONG, Point> LifePoint;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRun;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRunNew;
-long LifePointRunSize;
-long LifePointRunSizeTmp;
+//static std::unordered_map <LONGLONG, Point> LifePointO;
+static long LifePointRunSize;
+//static long LifePointRunSizeTmp;
+
+//bool CalcEnd = true; //вычисления закончены - готов расчет нового поколения
 
 //static std::unordered_map<LONGLONG, Point> LifePointRun;
 
 
 Calc::Calc()
 {
-//Calc:population = population;
+	AreaXmin = LLONG_MAX;// LLONG_MAX;
+	AreaYmin = LONG_MAX;
+	AreaXmax = LONG_MIN;
+	AreaYmax = LONG_MIN;
+	//Generation = generation;
+	//Population = population;
+	//AreaXmin = areaXmin;
+	//AreaYmin = areaYmin;
+	//AreaXmax = areaXmax;
+	//AreaYmax = areaYmax;
+	//CalcEnd = true;
 }
 
 LONGLONG Calc::HashPoint(Point point)
@@ -35,7 +51,6 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, Point> &LifePoint)
 	i = LifePoint.find(HashPoint(point));
 	if (i == LifePoint.end()) return false;
 	return i->second.life;
-	//return (i != LifePoint.end()) && i->second.life;
 }
 void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete) //сОздаем для точки итератор
 {
@@ -43,9 +58,6 @@ void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, 
 	const LONGLONG hashPoint = HashPoint(pointTmp);
 	std::unordered_map<LONGLONG, Point>::iterator i;
 	i = LifePoint.find(hashPoint); //для удаляемой точки всегда должен быть не конечный итератор
-	//typedef std::unordered_map<std::string, int>::iterator iter;
-	//const std::pair< iter, bool> result;
-	//auto result2;
 	if (pointDelete) //если удаляем
 	{
 		if (i != LifePoint.end() && i->second.life==true) InsertRun(i, pointDelete); //удаляем если есть такая точка и она живая
@@ -54,7 +66,6 @@ void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, 
 	{
 		if (i == LifePoint.end())//если такой точки нет - создаем
 		{
-			//i = LifePoint.emplace(std::pair<LONGLONG, Point>({ hashPoint ,(Point)pointTmp }));
 			i = LifePoint.emplace(hashPoint, pointTmp).first;
 			InsertRun(i, pointDelete);
 		}
@@ -63,8 +74,8 @@ void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, 
 			if (i->second.life == false) InsertRun(i, pointDelete); //создаем если не было живой
 		}
 	}
-	
 }
+
 void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool pointDelete) //расчет по итераторам
 {
 	long LifePointRunSizeTmp = LifePointRun.size(); //размер массива RUN
@@ -83,8 +94,9 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				{ 
 					if (i != LifePoint.end()) // если такая точка есть (для удаляемой точки)
 					{
-						population--;
+						Population--;
 						i->second.life = false;
+						LifePointOut.erase(i->first);//удяляем в массиве для вывода
 						i->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
@@ -122,8 +134,9 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 			{
 				if (y == 1 && x == 1)//считаем саму себя
 				{
-					population++;
+					Population++;
 					i->second.life = true;
+					LifePointOut.emplace(i->first, i->second);//добавляем в массиве для вывода
 					i->second.update++;
 					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 					{
@@ -165,18 +178,18 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				}
 			}
 		}
-		if (areaXmin > i->second.x)areaXmin = i->second.x;//расчет ареала 
-		if (areaYmin > i->second.y)areaYmin = i->second.y;
-		if (areaXmax < i->second.x)areaXmax = i->second.x;
-		if (areaYmax < i->second.y)areaYmax = i->second.y;
+		if (AreaXmin > i->second.x)AreaXmin = i->second.x;//расчет ареала 
+		if (AreaYmin > i->second.y)AreaYmin = i->second.y;
+		if (AreaXmax < i->second.x)AreaXmax = i->second.x;
+		if (AreaYmax < i->second.y)AreaYmax = i->second.y;
 	}
 }
 
-long Calc::Generation(){ return generation;}
-long Calc::AreaXmin() { return areaXmin; }
-long Calc::AreaYmin() { return areaYmin; }
-long Calc::AreaXmax() { return areaXmax; }
-long Calc::AreaYmax() { return areaYmax; }
+//long Calc::Generation(){ return generation;}
+//long Calc::AreaXmin() { return areaXmin; }
+//long Calc::AreaYmin() { return areaYmin; }
+//long Calc::AreaXmax() { return areaXmax; }
+//long Calc::AreaYmax() { return areaYmax; }
 
 void Calc::RunLife()
 {
@@ -240,166 +253,58 @@ void Calc::RunLife()
 			LifePoint.erase(NullPoint[j]);
 		}
 	}
-	
-	++generation;
+	++Generation;
+	CalcEnd = true;
+}
 
-
-	//std::unordered_map<LONGLONG, Point> LifePointRunOld(LifePointRun);
-//std::unordered_map<LONGLONG, Point> LifePointOld(LifePointRun);
-//LifePointRunOld = LifePointRun;
-//LifePointRun.clear();
-//LifePointOld = LifePoint;
-
-//std::unordered_map<LONGLONG, Point>::iterator i;
-//for (i = LifePointRunOld.begin(); i != LifePointRunOld.end(); i++) //загружаем нулевое поколение в RUN
+//void Calc::RunLifeTread()
 //{
-//	if (i->second.state == 3 && i->second.life==false)
-//	{
-//		Calc::Insert(i->second, LifePoint, false);
-//	}
-//	else if((i->second.state > 3 || i->second.state < 2) && i->second.life == true)
-//	{
-//		Calc::Insert(i->second, LifePoint, true);
-//	}
+//	//while (!CalcEnd)
+//	//{
+//	//	int x = 0;
+//	//}
+//	//сохраняем данные, запускаем новый расчет в отдельном потоке
+//	Update();
+//	CalcEnd = false;
+//
+//std::vector<std::thread> thr(1); //для запуска потоков
+//for (int i = 1; i <= 1; i++) thr[i - 1] = std::thread(&Calc::RunLife, this);
+////for (int i = 1; i <= 1; i++) thr[i - 1].detach(); //отделяем потоки
+//for (int i = 1; i <= 1; i++) thr[i - 1].join(); //ждем все потоки
 //}
 
-////удаляем пустые точки
-//std::vector<std::unordered_map<LONGLONG, Point>::iterator> NullPoint(LifePoint.size());
-//long NullPointSize = 0;
-//for (i = LifePoint.begin(); i != LifePoint.end(); i++) 
+//void Calc::Update()
 //{
-//	if (i->second.state < 1 && i->second.life==false)
-//	{
-//		NullPoint[NullPointSize] = i;
-//		NullPointSize++;
-//	}
+//	Generation = generation;
+//	Population = population;
+//	AreaXmin = areaXmin;
+//	AreaYmin = areaYmin;
+//	AreaXmax = areaXmax;
+//	AreaYmax = areaYmax;
+//	//LifePointOut = LifePointO;
 //}
-//for (long j = 0; j < NullPointSize; j++)
-//{
-//	LifePoint.erase(NullPoint[j]);
-//}
-
-
-	//if (LifePointRunSize >= LifePointRunSizeTmp)
-	//{
-	//	LifePointRunSizeTmp = LifePointRunSizeTmp + 10000;
-	//	LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
-	//}
-	//LifePointRun[++LifePointRunSize - 1] = i->second;
-
-
-	//long LifePointRunSizeTmp = LifePointRun.size(); //размер массива RUN
-	//std::unordered_map<LONGLONG, Point>::iterator i;	
-	//static std::vector<Point> LifePointRunOld(LifePointRun);
-	//long LifePointRunSizeOld = LifePointRunSize;// = LifePointRunSize;
-	//LifePointRunSize = 0;
-	//std::unordered_map <LONGLONG, Point> LifePointOld(LifePoint);
-	//LifePointRunSize = 0;
-
-	//if (generation == 0)
-	//{
-	//	for (i = LifePoint.begin(); i != LifePoint.end(); i++) //загружаем нулевое поколение в RUN
-	//	{
-	//		LifePointRunSizeOld++;
-	//		if (LifePointRunSizeOld >= LifePointRunSizeTmp) LifePointRun.resize(10000);
-	//		LifePointRun[LifePointRunSizeOld -1] = i->second;
-	//	}
-
-	//}
-
-	//for (long j = 0; j< LifePointRunSizeOld; j++) //считаем новое поколение по RUN
-	//{
-
-	//	if (LifePointRunOld[j].state == 3 && LifePointRunOld[j].life==false)
-	//	{
-	//		Calc::Insert(LifePointRunOld[j], LifePoint, false);
-	//	}
-	//	else if(LifePointRunOld[j].state > 3 || LifePointRunOld[j].state < 2)
-	//	{
-	//		Calc::Insert(LifePointRunOld[j], LifePoint, true);
-	//	}
-
-	//}
-
-	//LifePointRunSize = LifePointRunSizeNew;
-	
-
-					//LifePoint.erase(hashPoint);
-		//LifePointRun.erase(hashPoint);
-
-
-		//{
-		//	//if (!calc.Contains(i->second, LifePointEnd))
-		//	//{
-		//		//забираем данные для быстрой обработки 5*5 с целевой точкой посредине
-		//		for (int y = 0; y < 5; y++) //обработка 25 координат
-		//		{
-		//			for (int x = 0; x < 5; x++)
-		//			{
-		//				boolTmp[y][x] = calc.Contains({ i->second.x + nn[x], i->second.y + nn[y] }, LifePointOld);
-		//			}
-		//		}
-
-		//		//обработка 8 координат по каждой из 8 координат
-		//		for (int y = 0; y < 3; y++) // проходка по временному массиву 5*5
-		//		{
-		//			for (int x = 0; x < 3; x++)
-		//			{
-		//				//if (!(y == 1 && x == 1))//не считаем саму себя
-		//				//{
-		//					//tmpPoint2 = { 2 + n[y],  2 + n[x] };//точки вокруг целевой(точка 2*2 во временном массиве)
-
-		//				for (int yy = 0; yy < 3; yy++) // проходка по каждой точке временного массива 5*5/8 соседних
-		//				{
-		//					for (int xx = 0; xx < 3; xx++)
-		//					{
-		//						if (!(yy == 1 && xx == 1))//не считаем саму себя
-		//						{
-		//							//tmpPoint3 = { (2 + n[x]) + n[xx], (2 + n[y]) + n[yy] };//точка внутри временного массива
-		//							if (boolTmp[2 + n[y] + n[yy]][2 + n[x] + n[xx]]) L++;
-		//							if (L > 3) goto nx_; //нет смысла считать более 4 точек вокруг
-		//						}
-		//					}
-		//				}
-
-		//			nx_:
-		//				tmpPoint = { i->second.x + n[x], i->second.y + n[y] };
-		//				//LifePointEnd[HashPoint(tmpPoint)] = tmpPoint; //добавить уже обработанные ячейки
-		//				if (L < 2 || L > 3)
-		//				{
-
-		//					if (boolTmp[2 + n[y]][2 + n[x]]) //если точка была
-		//					{
-		//						LifePoint.erase(HashPoint(tmpPoint)); //удалить
-		//						LifePointRun[HashPoint(tmpPoint)] = tmpPoint; //добавить
-		//					}
-		//				}
-		//				else if (L == 3)
-		//				{
-		//					if (!boolTmp[2 + n[y]][2 + n[x]]) //если точки не было
-		//					{
-
-		//						calc.Insert(tmpPoint, LifePoint, false);
-		//					}
-		//				}
-		//				L = 0;
-		//			}
-		//		}
-		//}
-	
+void Calc::RunLifeStep(long& step)
+{
+	long stepTmp = 0;
+	while(step> stepTmp)
+	{
+		RunLife();
+		stepTmp++;
+	}
 }
 
 void Calc::DelLife()
 {
-	this->LifePoint.clear();
-	generation = 0;
-	population = 0;
+	LifePoint.clear();
+	LifePointOut.clear();
+	Generation = 0;
+	Population = 0;
 	LifePointRunSize = 0;
-	LifePointRunSizeTmp = 0;
-	areaXmin = LONG_MAX;
-	areaYmin = LONG_MAX;
-	areaXmax = LONG_MIN;
-	areaYmax = LONG_MIN;
+	//LifePointRunSizeTmp = 0;
+	AreaXmin = LONG_MAX;
+	AreaYmin = LONG_MAX;
+	AreaXmax = LONG_MIN;
+	AreaYmax = LONG_MIN;
 }
 
 Calc::~Calc()

@@ -15,10 +15,10 @@ Rle::Rle()
 void Rle::Save(std::wstring name, Calc& calc)
 {
 	Point point;
-	long areaXmin = calc.AreaXmin();
-	long areaYmin = calc.AreaYmin();
-	long areaXmax = calc.AreaXmax();
-	long areaYmax = calc.AreaYmax();
+	long areaXmin = calc.AreaXmin;
+	long areaYmin = calc.AreaYmin;
+	long areaXmax = calc.AreaXmax;
+	long areaYmax = calc.AreaYmax;
 	long dupO = 0;
 	long dupB = 0;
 	long dup$ = 0;
@@ -201,14 +201,28 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 	}
 	end_:
 	file.close();
+	//calc.Update();
 
 	//автомасштабирование
-	long scX= rect.right / ((calc.AreaXmax() - calc.AreaXmin() + 1));
-	long scY = rect.bottom / ((calc.AreaYmax() - calc.AreaYmin() + 1));
-	if (scX > scY) scX = scY;//; else grid.scale = sc1;
-	if (scX > 50) scX = 50; //макс 50 пикселей
-	if (scX <= 0) scX = 1; //мин 1 пикселей
-	grid.scale = scX;
+	double scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
+	double scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
+	if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
+	if (scX > 32) scX = 32; //макс 32 пикселей
+	//if (scX <= 0) scX = 1; //мин 1 пикселей
+	double scale=33;
+	if (scX < 1) scX = (long)(-1.00 / scX-1);
+	while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
+	{
+		if (scale == 1) scale = -2;
+		else if (scale <= -32) scale = scale * 2;
+		else scale--;
+
+		if (scale < scX)
+		{
+			grid.scalePoint = scale;
+			scX = grid.scalePoint;
+		}
+	}
 }
 
 Rle::~Rle()

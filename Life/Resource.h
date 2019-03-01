@@ -25,6 +25,7 @@
 #define IDM_BREAK2				1007
 #define IDM_BREAK3				1008
 #define IDM_BREAK4				1009
+#define IDM_RETURN_TO_ZERO		1010
 // Следующие стандартные значения для новых объектов
 //
 #ifdef APSTUDIO_INVOKED
