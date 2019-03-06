@@ -1,27 +1,27 @@
 #include "stdafx.h"
 #include <iostream> 
 #include "Grid.h"
-#include "Calc.h"
-#include <unordered_map>
-//#include <concurrent_unordered_map.h>
-//#include <map>
-//#include <vector>
+//#include "Calc.h"
+//#include <unordered_map>
 
-//static std::vector<RECT> vec;
-//long vecSize = 0;
+static Point sizeBuffer;
+static unsigned char* lpBitmapBitsBuffer;
+//std::vector<long> PointCount;
+static long* PointCount ;
+
 
 Grid::Grid()
 {
 	position.x = 0;//центр
 	position.y = 0;//центр
 	scalePoint = 16; // По-умолчанию ширина клетки 16 пикселей
-	//scale = 16.0;
-	//vec.resize(1000000);
+	updateBuffer = true;
 
 }
 
 Grid::~Grid()
 {
+	//delete[] lpBitmapBitsBuffer;
 }
 
 
@@ -52,51 +52,51 @@ Point Grid::GetCell(Point hDCPosition)
 	return res;
 }
 
-
-void Grid::DrawLine(HDC hDC, Point size)
-{
-	// Выводим сетку
-	if (scalePoint >= 4)//не рисуем сетку при ячейке < 4 пикселя  
-	{	
-	double scale;
-	if (scalePoint <1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	HPEN hPen, OldPen; //Объявляется перо
-
-	long startFade = 16;
-	long grayScale = 222;
-
-	if (scale >= 4 && scale <= startFade) //делаем постепенный переход сетки
-	{
-		grayScale = 222 + (startFade - scale) * 32 / (startFade);
-	}
-
-	hPen = CreatePen(PS_SOLID, 1, RGB(grayScale, grayScale, grayScale)); //создаём перо нужного цвета
-	OldPen = (HPEN)SelectObject(hDC, hPen); //Объект делается текущим
-
-	long px = position.x % (long)scale; // x координата первой вертикальной линии 
-	long py = position.y % (long)scale; // y координата первой вертикальной линии 
-
-	long wx = size.x / scale + 1; // количество линий по горизонтали, видимых а окне
-	long wy = size.y / scale + 1; // количество линий по вертикали, видимых а окне
-
-	// Сначала вертикальные линии
-		for (long x = 0; x < wx; x++)
-		{
-			MoveToEx(hDC, px + x * scale, 0, NULL); // Поставим точку
-			LineTo(hDC, px + x * scale, size.y); // От неё проведем линию
-		}
-		// Потом горизонтальные
-		for (long y = 0; y < wy; y++)
-		{
-			MoveToEx(hDC, 0, py + y * scale, NULL);
-			LineTo(hDC, size.x, py + y * scale);
-		}
-
-	SelectObject(hDC, OldPen);
-	DeleteObject(hPen);
-	DeleteObject(OldPen);
-	}
-}
+//
+//void Grid::DrawLine(HDC hDC, Point size)
+//{
+//	// Выводим сетку
+//	if (scalePoint >= 3)//не рисуем сетку при ячейке < 4 пикселя  
+//	{	
+//	double scale;
+//	if (scalePoint <1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
+//	HPEN hPen, OldPen; //Объявляется перо
+//
+//	long startFade = 16;
+//	long grayScale = 222;
+//
+//	if (scale >= 3 && scale <= startFade) //делаем постепенный переход сетки
+//	{
+//		grayScale = 222 + (startFade - scale) * 32 / ((startFade)-2);
+//	}
+//
+//	hPen = CreatePen(PS_SOLID, 1, RGB(grayScale, grayScale, grayScale)); //создаём перо нужного цвета
+//	OldPen = (HPEN)SelectObject(hDC, hPen); //Объект делается текущим
+//
+//	long px = position.x % (long)scale-1; // x координата первой вертикальной линии 
+//	long py = position.y % (long)scale-1; // y координата первой вертикальной линии 
+//
+//	long wx = size.x / scale + 1; // количество линий по горизонтали, видимых а окне
+//	long wy = size.y / scale + 1; // количество линий по вертикали, видимых а окне
+//
+//	// Сначала вертикальные линии
+//		for (long x = 0; x < wx; x++)
+//		{
+//			MoveToEx(hDC, px + x * scale, 0, NULL); // Поставим точку
+//			LineTo(hDC, px + x * scale, size.y); // От неё проведем линию
+//		}
+//		// Потом горизонтальные
+//		for (long y = 0; y < wy; y++)
+//		{
+//			MoveToEx(hDC, 0, py + y * scale, NULL);
+//			LineTo(hDC, size.x, py + y * scale);
+//		}
+//
+//	SelectObject(hDC, OldPen);
+//	DeleteObject(hPen);
+//	DeleteObject(OldPen);
+//	}
+//}
 
 void Grid::AddScale(long x, long y) // Увеличить масштаб отталкиваясь от точки x, y
 {
@@ -135,121 +135,224 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 	position.x = x - (float)zx * scale; // Новые координаты центра грида 
 	position.y = y - (float)zy * scale;
 }
-//void Grid::FillRectangle(HDC hDC, Calc &calc, RECT& rect)
-//{
-//	//HBRUSH s = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0)); //задаём сплошную кисть, закрашенную цветом RGB - черный
-//	//RECT rect;
-//	//HWND hWnd = WindowFromDC(hDC);
-//	//GetClientRect(hWnd, &rect);
-//
-//	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
-//	std::unordered_map<LONGLONG, Point>::iterator i;
-//	//vecSize = -1;
-//
-//	for (i = calc.LifePointOut.begin(); i != calc.LifePointOut.end(); i++)
-//	{
-//		//if (i->second.life) 
-//		//{
-//			r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
-//			r.top = i->second.y * scale + position.y; // i->second.y;//Y-координата верхнего левого угла прямоугольника.
-//			//r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
-//			//r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
-//			if (scale < 1)
-//			{
-//				r.right = r.left+1;//X-координата нижнего правого угла прямоугольника.
-//				r.bottom = r.top+1; //Y-координата нижнего правого угла прямоугольника.
-//
-//			}
-//			else
-//			{
-//				r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
-//				r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
-//			}
-//
-//			//Заполняем прямоугольник
-//			if (r.right >= rect.left && r.bottom >= rect.top && r.left <= rect.right && r.top <= rect.bottom)
-//			{
-//				//vecSize++;
-//				//if (vecSize>= vec.size()) vec.resize(1000000);
-//				//vec[vecSize]=r;
-//				//SetPixel(hDC, r.left, r.top, RGB(0,0,0));
-//				//добавить проверку на инвертирование повторно одной и той же точки!!!
-//					InvertRect(hDC, &r); //42
-//
-//			}
-//	//		//DrawFocusRect(hDC, &r); //жрёт 50% процессороного времени //23
-//	//		//FillRect(hDC, &r, s); //жрёт 50% процессороного времени //30
-//	//		//Rectangle(hDC, r.left, r.top, r.right, r.bottom); //27
-//
-//	//		//через строку
-//	//		//MoveToEx(hDC, r.left, r.top, NULL);  // Для теста 27
-//	//		//LineTo(hDC, r.right, r.bottom);
-//
-//	//		//SetPixel(hDC, r.left, r.top, RGB(255, 51, 0)); //$$$SetPixel устанавливает заданный цвет в точке с указанными координатами, GetPixel соответственно возвращает цвет //27
-//		//}
-//	}
-//	//DeleteObject(s);
-//
-//
-//}
 
-void Grid::Draw(unsigned char* &lpBitmapBits, Calc &calc, RECT& rect)
+void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Point>& LifePoint, RECT& rect)
 {
-	Point size;
-	size.x = rect.right - rect.left+1;
-	size.y = rect.bottom - rect.top+1;
+		/*Point size;*/
+	sizeBuffer.x = rect.right - rect.left + 1;
+	sizeBuffer.y = rect.bottom - rect.top + 1;
 	int index;
-	long indexMax = size.x*size.y * 4;
+	long indexMax = sizeBuffer.x*sizeBuffer.y * 4;
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
-	std::unordered_map<LONGLONG, Point>::iterator i;
-	for (i = calc.LifePointOut.begin(); i != calc.LifePointOut.end(); i++)
+
+	if (updateBuffer) //если перезаполняем буфер
 	{
-		//r.left = i->second.x * scale + position.x; //X-координата верхнего левого угла прямоугольника.
-		//r.top = i->second.y * scale + position.y; //Y-координата верхнего левого угла прямоугольника.
-		////r.right = (i->second.x + 1) * scale + position.x;//X-координата нижнего правого угла прямоугольника.
-		////r.bottom = (i->second.y + 1) * scale + position.y; //Y-координата нижнего правого угла прямоугольника.
+		delete[] lpBitmapBitsBuffer;
+		lpBitmapBitsBuffer = new unsigned char[indexMax];
+		delete[] PointCount;
+		PointCount = new long[(sizeBuffer.x+32)*(sizeBuffer.y+32)]();
 
-		if (i->second.x < 0 && scale<1) //при отрицательных координатах и масшщтабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
-			r.left = (double)i->second.x * scale+1 + position.x; //?
-		else
-			r.left = (double)i->second.x * scale + position.x; //?
-
-		if (i->second.y < 0 && scale<1)
-			r.top = (double)i->second.y * scale+1 + position.y; //?
-		else
-			r.top = (double)i->second.y * scale + position.y; //?
-
-
-		//if (scale <= 1)
-		//{
-		//	r.right = r.left;// +1;//X-координата нижнего правого угла прямоугольника.
-		//	r.bottom = r.top;// +1; //Y-координата нижнего правого угла прямоугольника.
-		//}
-		//else
-		//{
-			r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
-			r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
-		//}
-
-		//Заполняем прямоугольник
-		long yMax= scale;
-		long xMax= scale;
-		if (scale < 1) { yMax = 1; xMax = 1; }
-
-		if (r.right >= rect.left && r.bottom >= rect.top && r.left <= rect.right && r.top <= rect.bottom)
+		// Выводим сетку
+		if (scalePoint >= 3)//рисуем сетку при 3х и более пикселей на клетку  
 		{
+			long startFade = 16;
+			long grayScale = 222;
+
+			if (scale >= 3 && scale <= startFade) //делаем постепенный переход сетки
+			{
+				grayScale = 222 + (startFade - scale) * 32 / ((startFade)-2);
+			}
+
+			long px = (position.x % (long)scale) - 1 - scale; // x координата первой горизонтальной линии 
+			long py = (position.y % (long)scale) - 1 - scale; // y координата первой вертикальной линии 
+			long yMax = sizeBuffer.y;
+			long xMax = sizeBuffer.x;
+
+			//горизонтальные линии
+			for (long y = py; y < yMax; y = y + scalePoint)
+			{
+				for (long x = px; x < xMax; x = x++)
+				{
+					index = xMax * 4 * y + x * 4;
+					if (x >= 0 && y >= 0)
+					{
+						lpBitmapBits[index + 0] = grayScale; // blue
+						lpBitmapBits[index + 1] = grayScale; // green
+						lpBitmapBits[index + 2] = grayScale; // red 
+					}
+				}
+			}
+
+			//вертикальные линии
+			for (long x = px; x < xMax; x = x + scalePoint)
+			{
+				for (long y = py; y < yMax; y++)
+				{
+					index = xMax * 4 * y + x * 4;
+					if (x >= 0 && y >= 0)
+					{
+						lpBitmapBits[index + 0] = grayScale; // blue
+						lpBitmapBits[index + 1] = grayScale; // green
+						lpBitmapBits[index + 2] = grayScale; // red 
+					}
+				}
+			}
+		}
+
+		//выводим живые клетки
+		std::unordered_map<LONGLONG, Point>::iterator i;
+		for (i = LifePoint.begin(); i != LifePoint.end(); i++)
+		{
+			if (i->second.life)
+			{
+				RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+
+				if (i->second.x < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+					r.left = (double)i->second.x * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
+				else
+					r.left = (double)i->second.x * scale + position.x; //?
+
+				if (i->second.y < 0 && scale < 1)
+					r.top = (double)i->second.y * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
+				else
+					r.top = (double)i->second.y * scale + position.y; //?
+
+				r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
+				r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
+				long yMax = scale - 1;
+				long xMax = scale - 1;
+				if (scale <= 1)
+				{
+					yMax = 1;
+					xMax = 1;
+				}
+				else if (scale == 2)
+				{
+					yMax = 2;
+					xMax = 2;
+				}
+
+				if (r.right >= 0 && r.bottom >= 0 && r.left <= rect.right && r.top <= rect.bottom)
+				{
+					for (long y = 0; y < yMax; y++)  //рисуем квадрат
+					{
+						for (long x = 0; x < xMax; x++)
+						{
+							long xx = r.left + x;
+							long yy = r.top + y;
+							index = sizeBuffer.x * 4 * yy + xx * 4;
+							if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
+							{
+								lpBitmapBits[index + 0] = 0; // blue
+								lpBitmapBits[index + 1] = 0; // green
+								lpBitmapBits[index + 2] = 0; // red 
+							}
+						}
+					}
+					//добавляем данные в PointCount о количестве ячеек в пикселе
+					PointCount[(r.top+32)*(sizeBuffer.y+32)+(r.left+32)]++;
+				}
+			}
+		}
+		memcpy(lpBitmapBitsBuffer, lpBitmapBits, indexMax); //копируем в буфер сетку и клетки
+		updateBuffer = false; //буфер обновлен
+	} 
+	else
+	{
+	memcpy(lpBitmapBits, lpBitmapBitsBuffer, indexMax); //копируем сетку и квадраты на холст
+	}
+}
+
+void Grid::DrawPoint(Point &point)
+{
+	double scale;
+	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
+	long indexP;
+
+	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+
+	if (point.x < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+		r.left = (double)point.x * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
+	else
+		r.left = (double)point.x * scale + position.x; //?
+
+	if (point.y < 0 && scale < 1)
+		r.top = (double)point.y * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
+	else
+		r.top = (double)point.y * scale + position.y; //?
+
+	r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
+	r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
+
+	if (r.right >= 0 && r.bottom >= 0 && r.left <= sizeBuffer.x-1 && r.top <= sizeBuffer.y-1)
+	{
+		indexP = (r.top + 32)*(sizeBuffer.y + 32) + (r.left + 32);
+		if (point.life)	PointCount[indexP]++;//добавляем данные в PointCount о количестве ячеек в пикселе
+		else PointCount[indexP]--;//добавляем данные в PointCount о количестве ячеек в пикселе
+		
+		//PointCount[0] = 54645;
+		//long nn = PointCount[0];
+		//nn = PointCount[indexP];
+
+		if (PointCount[indexP] == 1) //отрисовываем квадрат
+		{
+			long yMax = scale - 1;
+			long xMax = scale - 1;
+			if (scale <= 1)
+			{
+				yMax = 1;
+				xMax = 1;
+			}
+			else if (scale == 2)
+			{
+				yMax = 2;
+				xMax = 2;
+			}
+
 			for (long y = 0; y < yMax; y++)  //рисуем квадрат
 			{
 				for (long x = 0; x < xMax; x++)
 				{
-					index = size.x * 4 * (r.top+y) + (r.left+x) * 4;
-					if (index >= 0 && index <= indexMax)
+					long xx = r.left + x;
+					long yy = r.top + y;
+					long index = sizeBuffer.x * 4 * yy + xx * 4;
+					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
 					{
-						lpBitmapBits[index + 0] = 0; // blue
-						lpBitmapBits[index + 1] = 0; // green
-						lpBitmapBits[index + 2] = 0; // red 
+						lpBitmapBitsBuffer[index + 0] = 0; // blue
+						lpBitmapBitsBuffer[index + 1] = 0; // green
+						lpBitmapBitsBuffer[index + 2] = 0; // red 
+					}
+				}
+			}
+		}
+		else if (PointCount[indexP] == 0) //стираем квадрат
+		{
+			long yMax = scale - 1;
+			long xMax = scale - 1;
+			if (scale <= 1)
+			{
+				yMax = 1;
+				xMax = 1;
+			}
+			else if (scale == 2)
+			{
+				yMax = 2;
+				xMax = 2;
+			}
+
+			for (long y = 0; y < yMax; y++)  //рисуем квадрат
+			{
+				for (long x = 0; x < xMax; x++)
+				{
+					long xx = r.left + x;
+					long yy = r.top + y;
+					long index = sizeBuffer.x * 4 * yy + xx * 4;
+					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
+					{
+						lpBitmapBitsBuffer[index + 0] = 255; // blue
+						lpBitmapBitsBuffer[index + 1] = 255; // green
+						lpBitmapBitsBuffer[index + 2] = 255; // red 
 					}
 				}
 			}

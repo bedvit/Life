@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include "rle.h"
-#include "Calc.h"
+//#include "Calc.h"
 #include "Point.h"
 #include <algorithm>
 
@@ -111,9 +111,6 @@ void Rle::Save(std::wstring name, Calc& calc)
 		}
 	}
 
-	//strOut = strOut + strLine + "!";
-
-
 	if (strLine.length() > 69) //если длина строки превышает 69 символов
 	{
 		strOut = strOut + strLine + "\n";
@@ -125,7 +122,6 @@ void Rle::Save(std::wstring name, Calc& calc)
 	}
 
 	std::ofstream file(name); // поток для записи
-	//out.open(name); // окрываем файл для записи
 	if (file.is_open()) file << strOut;
 	file.close();
 	return;
@@ -163,7 +159,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 							if (repeat == 0)
 							{
 								point = {x,y};
-								calc.Insert(point, calc.LifePoint, false);
+								calc.Insert(point, calc.LifePoint, false, grid);
 								x++;
 							}
 							else
@@ -171,7 +167,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 								for (long j = 0; j < repeat; j++)
 								{
 									point = { x,y };
-									calc.Insert(point, calc.LifePoint, false);
+									calc.Insert(point, calc.LifePoint, false, grid);
 									x++;
 								}
 							}
@@ -201,14 +197,12 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 	}
 	end_:
 	file.close();
-	//calc.Update();
 
 	//автомасштабирование
 	double scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
 	double scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
 	if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
 	if (scX > 32) scX = 32; //макс 32 пикселей
-	//if (scX <= 0) scX = 1; //мин 1 пикселей
 	double scale=33;
 	if (scX < 1) scX = (long)(-1.00 / scX-1);
 	while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
@@ -217,7 +211,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 		else if (scale <= -32) scale = scale * 2;
 		else scale--;
 
-		if (scale < scX)
+		if (scale <= scX)
 		{
 			grid.scalePoint = scale;
 			scX = grid.scalePoint;

@@ -1,8 +1,8 @@
 #pragma once
 //#include "Point.h"
-#include "Calc.h"
+//#include "Calc.h"
 #include "Point.h"
-//#include <d2d1.h>
+#include <unordered_map>
 
 class Grid
 {
@@ -12,20 +12,14 @@ public:
 
 	Point position; // позиция начала координат сетки относительно левого верхнего угла окна в пискселях
 	long scalePoint; // сколько пикселей занимает одна клетка
-	//double scale; // сколько пикселей занимает одна клетка
-
 	void DrawLine(HDC hdc, Point size); // Нарисовать сетку
 	void Move(long x, long y); // Сдвигает грид на x пикселей вправо и y вверх
 	void AddScale(long x, long y); // Увеличить масштаб отталкиваясь от точки x, y
 	void DecScale(long x, long y); // Уменьшить масштаб отталкиваясь от точки x, y
-	//void FillRectangle(HDC hDC, Calc& calc, RECT& rect); //Закрашмваем многоугольник
-	void Draw(unsigned char*& lpBitmapBits, Calc &calc, RECT& rect);
-	
+	void Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Point>& LifePoint, RECT& rect);
 	Point GetCell(Point); // Получить координаты точки 
-	//void DrawRect(HDC, HBRUSH, Point);
-
-
-
+	bool updateBuffer;
+	void DrawPoint(Point &point);
 };
 
 
