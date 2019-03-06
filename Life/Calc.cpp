@@ -1,10 +1,14 @@
 #include "stdafx.h"
 #include "Calc.h"
+//#include "Grid.h"
+//#include "Life.h"
 #include <unordered_map>
 #include <map>
 #include <thread>
 
 #define SIZE_ARRAY 1000000
+
+//Grid grid_;
 
 static long generation = 0;
 //static long generationOld = 0;
@@ -52,7 +56,7 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, Point> &LifePoint)
 	if (i == LifePoint.end()) return false;
 	return i->second.life;
 }
-void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete) //сОздаем для точки итератор
+void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, bool pointDelete, Grid& grid) //сОздаем для точки итератор
 {
 	Point pointTmp = { point.x,point.y};
 	const LONGLONG hashPoint = HashPoint(pointTmp);
@@ -60,23 +64,23 @@ void Calc::Insert(Point point, std::unordered_map <LONGLONG, Point> &LifePoint, 
 	i = LifePoint.find(hashPoint); //для удаляемой точки всегда должен быть не конечный итератор
 	if (pointDelete) //если удаляем
 	{
-		if (i != LifePoint.end() && i->second.life==true) InsertRun(i, pointDelete); //удаляем если есть такая точка и она живая
+		if (i != LifePoint.end() && i->second.life==true) InsertRun(i, pointDelete, grid); //удаляем если есть такая точка и она живая
 	}
 	else //если добавляем
 	{
 		if (i == LifePoint.end())//если такой точки нет - создаем
 		{
 			i = LifePoint.emplace(hashPoint, pointTmp).first;
-			InsertRun(i, pointDelete);
+			InsertRun(i, pointDelete, grid);
 		}
 		else //если есть
 		{
-			if (i->second.life == false) InsertRun(i, pointDelete); //создаем если не было живой
+			if (i->second.life == false) InsertRun(i, pointDelete, grid); //создаем если не было живой
 		}
 	}
 }
 
-void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool pointDelete) //расчет по итераторам
+void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool pointDelete, Grid& grid) //расчет по итераторам
 {
 	long LifePointRunSizeTmp = LifePointRun.size(); //размер массива RUN
 	int n[3] = { -1, 0, 1 };
@@ -96,7 +100,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 					{
 						Population--;
 						i->second.life = false;
-						LifePointOut.erase(i->first);//удяляем в массиве для вывода
+						grid.DrawPoint(i->second);//удяляем в массиве для вывода
 						i->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
@@ -136,7 +140,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				{
 					Population++;
 					i->second.life = true;
-					LifePointOut.emplace(i->first, i->second);//добавляем в массиве для вывода
+					grid.DrawPoint(i->second);//добавляем в массиве для вывода
 					i->second.update++;
 					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 					{
@@ -191,7 +195,7 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 //long Calc::AreaXmax() { return areaXmax; }
 //long Calc::AreaYmax() { return areaYmax; }
 
-void Calc::RunLife()
+void Calc::RunLife(Grid& grid)
 {
 	long LifePointRunSizeNew = LifePointRunNew.size(); //размер массива RUNtmp
 	//long LifePointRunSizeOld = LifePointRunSize;
@@ -226,11 +230,11 @@ void Calc::RunLife()
 	{
 		if (LifePointRunNew[j]->second.life)
 		{
-			InsertRun(LifePointRunNew[j], false);
+			InsertRun(LifePointRunNew[j], false, grid);
 		}
 		else if (!LifePointRunNew[j]->second.life)
 		{
-			InsertRun(LifePointRunNew[j], true);
+			InsertRun(LifePointRunNew[j], true, grid);
 		}
 	}
 	
@@ -283,12 +287,12 @@ void Calc::RunLife()
 //	AreaYmax = areaYmax;
 //	//LifePointOut = LifePointO;
 //}
-void Calc::RunLifeStep(long& step)
+void Calc::RunLifeStep(long& step, Grid& grid)
 {
 	long stepTmp = 0;
 	while(step> stepTmp)
 	{
-		RunLife();
+		RunLife(grid);
 		stepTmp++;
 	}
 }
@@ -296,7 +300,7 @@ void Calc::RunLifeStep(long& step)
 void Calc::DelLife()
 {
 	LifePoint.clear();
-	LifePointOut.clear();
+	//LifePointOut.clear();
 	Generation = 0;
 	Population = 0;
 	LifePointRunSize = 0;
