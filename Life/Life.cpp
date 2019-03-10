@@ -1,12 +1,6 @@
 ﻿// Life.cpp : Определяет точку входа для приложения.
-//
-
 #include "stdafx.h"
-
-//#include "Grid.h"
-
 #include "Life.h"
-//#include "Point.h"
 #include "rle.h"
 #include <thread>
 #include <Windows.h>
@@ -22,19 +16,13 @@ HINSTANCE hInst;                                // текущий экземпл
 WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
 WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
 
-// $$$$$ Это глобальная переменная класса Grid, который я написал. 
-// Этот класс поможет нам а) рисовать сетку б) красить в ней ячейки.
-// Он позволит нам думать что у нас есть бесконечное поле точек. 
-
 Grid grid;
 Calc calc;
 Rle rle;
 Point point;
 
-// $$$$$ Класс point написал тоже я. Это просто пара целых переменных x, y. Им можно задавать координаты ячейки грида, координаты пикселя, разность между двумя точками. Полезный короче. 
-// В стандартной библиотеке есть такой класс, но я хотел чтобы ты заценил насколько он простой. Потом я его убью и буду юзать типовой.
-Point size; // $$$$$ Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
-Point mousePos; // $$$$$ Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
+Point size; //Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
+Point mousePos; // Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
 Point mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 Point calcPoint;
 
@@ -42,9 +30,9 @@ Point calcPoint;
 //bool CalcEnd=false; //вычисления закончены - готов расчет нового поколения
 //bool UpdateLine = true; //отрисовать сетку если нужно еще раз
 static int wheelDelta = 0; // $$$$$ требуется для считывания колесика мышки
-bool DragEnabled; // $$$$$ Для таскания грида правой кнопкой мыши
-bool LbuttonClick; // $$$$$ Для выделения ячеек левой кнопкой мыши
-bool pointDelete; // $$$$$ Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
+bool DragEnabled; // Для таскания грида правой кнопкой мыши
+bool LbuttonClick; // Для выделения ячеек левой кнопкой мыши
+bool pointDelete; // Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
 unsigned int start_time; // = clock();
 unsigned int end_time; // = clock(); // конечное время
 unsigned int search_time; // = end_time - start_time; // искомое время
@@ -55,8 +43,9 @@ unsigned int search_timeNew;
 unsigned int GenerationFix;
 long step;
 
-HWND hWndEdit;
-HWND hWndEditS;
+HWND hWndEdit1;
+HWND hWndEdit2;
+HWND hWndEdit3;
 //открыть файл
 wchar_t* buf = new wchar_t[255];
 wchar_t *end;
@@ -66,10 +55,11 @@ wchar_t fileOut[MAX_PATH] = L"Life.rle";
 wchar_t buffer[255]; //результат для инфо панели
 wchar_t bufferTmp[255]; //результат для инфо панели
 char vOutChar[255];
+
 HFONT hFont = CreateFont(16, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Segoe UI"));
-//HDC hdcLine;
 
-
+HBITMAP bitmap;
+unsigned char* lpBitmapBits;
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -166,8 +156,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    RECT rect = { 0 };
   // GetWindowRect(hWnd, &rect); //в координатах экрана
 	GetClientRect(hWnd, &rect); //в координатах пользовательского окна
-	hWndEdit = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	hWndEditS = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	hWndEdit1 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	hWndEdit2 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	hWndEdit3 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE| WS_DISABLED, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
    return TRUE;
 }
 
@@ -186,12 +177,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	
 	
-	// $$$$ координаты мыши на Экране
+	// координаты мыши на Экране
 	long xPos = LOWORD(lParam);
 	long yPos = HIWORD(lParam);
 
-	// $$$$$ Получим координаты мыши в рамках клиентского окна 
-	// $$$$$ Клиентское окно или вьюпорт это рабочая область формы (без рамки, заголовка и меню).
+	//  Получим координаты мыши в рамках клиентского окна 
+	// Клиентское окно или вьюпорт это рабочая область формы (без рамки, заголовка и меню).
 
 	POINT p;
 	p.x = xPos;
@@ -210,18 +201,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
-				DestroyWindow(hWndEditS);
-				DestroyWindow(hWndEdit);
+				DestroyWindow(hWndEdit1);
+				DestroyWindow(hWndEdit2);
+				DestroyWindow(hWndEdit3);
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
-					GetWindowTextW(hWndEdit, buf, 255); //забираем данные о замедлении из пользовательского меню
-					SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
-					start_time = clock()- search_time;
-					start_timeNew = clock();
-					GenerationFix = calc.Generation;
-					GetWindowTextW(hWndEditS, buf, 255); //забираем данные о количестве поколений на один шаг
-					step = wcstol(buf, &end, 10);
+				GetWindowTextW(hWndEdit1, buf, 255); //забираем данные о замедлении из пользовательского меню
+				SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
+				start_time = clock()- search_time;
+				start_timeNew = clock();
+				GenerationFix = calc.Generation;
+				GetWindowTextW(hWndEdit2, buf, 255); //забираем данные о количестве поколений на один шаг
+				step = wcstol(buf, &end, 10);
 				break;
 			case IDM_STOP:
 				KillTimer(hWnd, 123);
@@ -281,6 +273,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
+
+			case IDM_ZOOM:
+				
+				grid.zoom = true;
+				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+				break;
+			case IDM_AUTOZOOM:
+				grid.autoZoom= !grid.autoZoom;
+				if (grid.autoZoom) SetWindowTextW(hWndEdit3, L"ВКЛ"); else  SetWindowTextW(hWndEdit3, L"ВЫКЛ");
+				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+				break;
+
+			case IDM_INFO:
+				grid.updateInfo = !grid.updateInfo;
+				grid.updateBuffer = true; //перерисовываем сетку
+				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+				break;
+
             default:
             return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -301,200 +311,231 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		}
 		break;
-	case WM_PAINT: // $$$ Событие прорисовки. Вызывается системой когда окно нужно перерисовать. Например если мы его растянули и т.д. Мы сами можешь попросить систему вызвать это событие.(см. ниже) 
+	case WM_PAINT: // Событие прорисовки. Вызывается системой когда окно нужно перерисовать. Например если мы его растянули и т.д. Мы сами можешь попросить систему вызвать это событие.(см. ниже) 
 		{
-			// $$$$$ Узнаем размеры клиентского окна.
+			//  Узнаем размеры клиентского окна.
 			RECT rect;
 			GetClientRect(hWnd, &rect);
 
 			size.x = rect.right - rect.left+1;// + 1; //ширина
 			size.y = rect.bottom - rect.top+1;// + 1; //высота
 			
+
+			if (grid.autoZoom || grid.zoom)
+			{
+				//автомасштабирование
+				double scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
+				double scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
+				if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
+				if (scX > 32) scX = 32; //макс 32 пикселей
+				if ((long)scX != grid.scalePoint)
+				{
+					double scale = 33;
+					if (scX < 1) scX = (long)(-1.00 / scX - 1);
+					while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
+					{
+						if (scale == 1) scale = -2;
+						else if (scale <= -32) scale = scale * 2;
+						else scale--;
+
+						if (scale <= scX)
+						{
+							grid.scalePoint = scale;
+							scX = grid.scalePoint;
+						}
+					}
+
+					if (grid.scalePoint < 1)//корректируем координаты сетки
+					{
+						grid.position = { calc.AreaXmin / grid.scalePoint + 1, calc.AreaYmin / grid.scalePoint + 1 };
+					}
+					else
+					{
+						grid.position = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
+					}
+					grid.updateBuffer = true; //перерисовываем сетку
+				}
+				grid.zoom = false;
+			}
+
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);// hdc это инструмент для рисования в клиентской области окна
 			HDC hMemDC = CreateCompatibleDC(hdc); //двойная буферизация
-
-			unsigned char* lpBitmapBits;
-			BITMAPINFO bi;
-			ZeroMemory(&bi, sizeof(BITMAPINFO));
-			bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-			bi.bmiHeader.biWidth = size.x;
-			bi.bmiHeader.biHeight = -size.y; //если отрицательное - слева вверху, положительное слева снизу
-			bi.bmiHeader.biPlanes = 1;
-			bi.bmiHeader.biBitCount = 32;
-			bi.bmiHeader.biCompression = BI_RGB;
-			HBITMAP bitmap = CreateDIBSection(hMemDC, &bi, DIB_RGB_COLORS, (VOID**)&lpBitmapBits, NULL, 0);
-			HGDIOBJ oldBmp = SelectObject(hMemDC, bitmap);
-
+			HGDIOBJ oldBmp;// = SelectObject(hMemDC, bitmap);
 			if (grid.updateBuffer)
 			{
+				BITMAPINFO bi;
+				ZeroMemory(&bi, sizeof(BITMAPINFO));
+				bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+				bi.bmiHeader.biWidth = size.x;
+				bi.bmiHeader.biHeight = -size.y; //если отрицательное - слева вверху, положительное слева снизу
+				bi.bmiHeader.biPlanes = 1;
+				bi.bmiHeader.biBitCount = 32;
+				bi.bmiHeader.biCompression = BI_RGB;
+
+				DeleteObject(bitmap);
+				bitmap = CreateDIBSection(hMemDC, &bi, DIB_RGB_COLORS, (VOID**)&lpBitmapBits, NULL, 0);
+				oldBmp = SelectObject(hMemDC, bitmap);
 				PatBlt(hMemDC, 0, 0, size.x, size.y, WHITENESS);//закрашиваем прямоугольник белым фоном
-				//	hdcLine = CreateCompatibleDC(hdc);
-				//	HBITMAP hScreen = CreateCompatibleBitmap(hdcLine, size.x, size.y);
-				//	HBITMAP oldBmp = (HBITMAP)SelectObject(hMemDC, hScreen);
-				//	PatBlt(hdcLine, 0, 0, size.x, size.y, WHITENESS);//закрашиваем прямоугольник белым фоном
-				//	//grid.DrawLine(hdcLine, size);
-				//	UpdateLine = false;
-			}
-
-			//BitBlt(hMemDC, 0, 0, size.x, size.y, hdcLine, 0, 0, SRCCOPY);
-			//PatBlt(hMemDC, 0, 0, size.x, size.y, WHITENESS);//закрашиваем прямоугольник белым фоном
-			grid.Draw(lpBitmapBits, calc.LifePoint, rect);
-			//grid.DrawLine(hMemDC, size);// $$$$$ Скажем гриду, чтобы нарисовал себя в рамках размеров клиентского окна
-
-			//ИНФО ПАНЕЛЬ
-			RECT rectTxt; //координаты текста
-			SelectObject(hMemDC, hFont);
-			SetTextColor(hMemDC, RGB(0, 0, 0));
-			long Xstart= rect.right - 100; //для авто-выравнивания
-			long Ystart=0;	
-			int decimal;
-			int sign;
-
-			Ystart += 10;//Масштаб
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Масштаб"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			if (grid.scalePoint < 1)
-			{
-				_itow_s(-grid.scalePoint, buffer, 255, 10);
+				grid.Draw(lpBitmapBits, calc.LifePoint, rect);
+				grid.updateBuffer = false; //буфер обновлен
 			}
 			else
 			{
-				_itow_s(grid.scalePoint, buffer, 255, 10);
+				oldBmp = SelectObject(hMemDC, bitmap);
 			}
-			int iEnd = wcslen(buffer)+1; //колво символов с '\0'
-			if (grid.scalePoint<1)
+
+
+			if (grid.updateInfo)
 			{
-				for (int i=0; i < iEnd-1; i++)
+				//ИНФО ПАНЕЛЬ
+				RECT rectTxt; //координаты текста
+				SelectObject(hMemDC, hFont);
+				SetTextColor(hMemDC, RGB(0, 0, 0));
+				long Xstart = rect.right - 100; //для авто-выравнивания
+				long Ystart = 0;
+				long break1 = 15;
+				long break2 = 25;
+				int decimal;
+				int sign;
+
+				PatBlt(hMemDC, Xstart, Ystart, 100, 435, WHITENESS);//закрашиваем прямоугольник белым фоном
+
+				Ystart += 0;//Масштаб
+				TextOut(hMemDC, Xstart, Ystart, L"Масштаб", 7);
+				Ystart += break1;
+				//SetRect(&rectTxt, Xstart, Ystart, 0, 0);
+				if (grid.scalePoint < 1)
 				{
-					bufferTmp[i] = buffer[i];
+					_itow_s(-grid.scalePoint, buffer, 255, 10);
 				}
-				bufferTmp[iEnd-1]= L':';
-				bufferTmp[iEnd] = L'1';
-				bufferTmp[iEnd+1] = L'\0';
+				else
+				{
+					_itow_s(grid.scalePoint, buffer, 255, 10);
+				}
+				int iEnd = wcslen(buffer) + 1; //колво символов с '\0'
+				if (grid.scalePoint < 1)
+				{
+					for (int i = 0; i < iEnd - 1; i++)
+					{
+						bufferTmp[i] = buffer[i];
+					}
+					bufferTmp[iEnd - 1] = L':';
+					bufferTmp[iEnd] = L'1';
+					bufferTmp[iEnd + 1] = L'\0';
+				}
+				else
+				{
+					bufferTmp[0] = L'1';
+					bufferTmp[1] = L':';
+					for (int i = 2; i < iEnd + 2; i++)
+					{
+						bufferTmp[i] = buffer[i - 2];
+					}
+				}
+				TextOut(hMemDC, Xstart, Ystart, bufferTmp, wcsnlen(bufferTmp,255));
+
+
+				Ystart += break2; //Координаты
+				TextOut(hMemDC, Xstart, Ystart, L"Координаты", 10);
+				Ystart += break1;
+				TextOut(hMemDC, Xstart, Ystart, L"X:", 2);
+				Point calcPoint = grid.GetCell(mousePos);
+				for (long b = 0;b<11;b++)buffer[b] = L' ';
+				_itow_s(calcPoint.x, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 255));
+				Ystart += break1;
+				TextOut(hMemDC, Xstart, Ystart, L"Y:", 2);
+				_itow_s(calcPoint.y, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 255));
+
+
+				Ystart += break2;//Ареал, min - max
+				TextOut(hMemDC, Xstart, Ystart, L"Xmin:", 5);
+				_i64tow_s(calc.AreaXmin, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				Ystart += break1;
+				TextOut(hMemDC, Xstart, Ystart, L"Ymin:", 5);
+				_itow_s(calc.AreaYmin, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				Ystart += break1;
+				TextOut(hMemDC, Xstart, Ystart, L"Xmax:", 5);
+				_itow_s(calc.AreaXmax, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				Ystart += break1;
+				TextOut(hMemDC, Xstart, Ystart, L"Ymax:", 5);
+				_itow_s(calc.AreaYmax, buffer, 255, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+
+
+				Ystart += break2;//Население
+				TextOut(hMemDC, Xstart, Ystart, L"Население", 9);
+				Ystart += break1;
+				_itow_s(calc.Population, buffer, 255, 10);
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+
+
+				Ystart += break2;//Поколение
+				TextOut(hMemDC, Xstart, Ystart, L"Поколение", 9);
+				Ystart += break1;
+				_itow_s(calc.Generation, buffer, 255, 10);
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+
+
+				Ystart += break2;//Таймер, сек.
+				TextOut(hMemDC, Xstart, Ystart, L"Таймер, сек.", 12);
+				Ystart += break1;
+				_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 5);
+				//_fcvt_s(buffer, _CVTBUFSIZE,search_time/1000, 5, &decimal, &sign); //для char
+				mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+
+
+				Ystart += break2;//Поколений/сек.
+				TextOut(hMemDC, Xstart, Ystart, L"Поколений/сек.", 14);
+				Ystart += break1;
+				double out = 0.0;
+				if (search_timeNew != 0) out = ((double)(calc.Generation - GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
+				_gcvt_s(vOutChar, sizeof(vOutChar), out, 5);
+				mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+		
+
+				Ystart += break2;//Замедление
+				TextOut(hMemDC, Xstart, Ystart, L"Замедление, мс.", 15);
+				Ystart += break1;
+				MoveWindow(hWndEdit1, Xstart, Ystart, 100, 14, true);
+
+
+				Ystart += break2;//Шаг поколений 
+				TextOut(hMemDC, Xstart, Ystart, L"Шаг поколений", 13);
+				Ystart += break1;
+				MoveWindow(hWndEdit2, Xstart, Ystart, 100, 14, true);
+
+
+				Ystart += break2;//Автомасштаб
+				TextOut(hMemDC, Xstart, Ystart, L"Автомасштаб", 11);
+				Ystart += break1;
+				MoveWindow(hWndEdit3, Xstart, Ystart, 100, 14, true);
+				//ИНФО ПЕНЕЛЬ
 			}
 			else
 			{
-				bufferTmp[0] = L'1';
-				bufferTmp[1] = L':';
-				for (int i = 2; i < iEnd+2; i++)
-				{
-					bufferTmp[i] = buffer[i - 2];
-				}
+			MoveWindow(hWndEdit1, -100, -100, 100, 14, true);//убираем с экрана
+			MoveWindow(hWndEdit2, -100, -100, 100, 14, true);
+			MoveWindow(hWndEdit3, -100, -100, 100, 14, true);
 			}
-			DrawText(hMemDC, bufferTmp, -1, &rectTxt, DT_NOCLIP);
-
-
-			Ystart += 30; //Координаты
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Координаты"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20; 
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			Point calcPoint = grid.GetCell(mousePos);
-			_itow_s(calcPoint.x, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Y:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			_itow_s(calcPoint.y, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-
-
-			Ystart += 30;//Ареал
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Ареал"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			_i64tow_s(calc.AreaXmin, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			Ystart += 15;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Y:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			_itow_s(calc.AreaYmin, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("X:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			_itow_s(calc.AreaXmax, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			Ystart += 15;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Y:"), -1, &rectTxt, DT_NOCLIP);
-			SetRect(&rectTxt, Xstart + 10, Ystart, 0, 0);
-			_itow_s(calc.AreaYmax, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			
-
-			Ystart += 30;//Население
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Население"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			_itow_s(calc.Population, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP); 
-			
-			
-			Ystart += 30;//Поколение
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Поколение"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			_itow_s(calc.Generation, buffer, 255, 10);
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-			
-
-			Ystart += 30;//Таймер
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Таймер, сек."), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 5);
-			//_fcvt_s(buffer, _CVTBUFSIZE,search_time/1000, 5, &decimal, &sign); //для char
-			mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-
-			Ystart += 30;//Таймер
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Поколений/сек."), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			double out = 0.0;
-			if(search_timeNew != 0) out=((double)(calc.Generation- GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			_gcvt_s(vOutChar, sizeof(vOutChar), out, 5);
-			mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
-			DrawText(hMemDC, buffer, -1, &rectTxt, DT_NOCLIP);
-
-
-			Ystart += 30;//Замедление
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Замедление, мс."), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			MoveWindow(hWndEdit, Xstart, Ystart, 100, 14, TRUE);
-
-
-			Ystart += 30;//Замедление
-			SetRect(&rectTxt, Xstart, Ystart, 0, 0);
-			DrawText(hMemDC, TEXT("Шаг поколений"), -1, &rectTxt, DT_NOCLIP);
-			Ystart += 20;
-			MoveWindow(hWndEditS, Xstart, Ystart, 100, 14, TRUE);
-			//ИНФО ПЕНЕЛЬ
-			
+			//double out = 0.0;
+			//if (search_timeNew != 0) out = ((double)(calc.Generation - GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
+			//_gcvt_s(vOutChar, sizeof(vOutChar), out, 5);
+			//mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
+			//TextOut(hMemDC, 0, 0, buffer, wcsnlen(buffer, 255));
 
 			BitBlt(hdc, 0, 0, size.x, size.y, hMemDC, 0, 0, SRCCOPY);
 			SelectObject(hMemDC, oldBmp);
 
 			DeleteDC(hMemDC);
-			//DeleteDC(hdcLine);
-			DeleteObject(bitmap);
+			//DeleteObject(bitmap);
 			DeleteObject(oldBmp);
 			DeleteDC(hdc);
 			EndPaint(hWnd, &ps);
@@ -503,8 +544,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_DESTROY: //подчищаем память
-		PostQuitMessage(0);
 		delete[] buf;
+		DeleteObject(bitmap);
+		PostQuitMessage(0);
+
 		//delete[] szFileName;
 		//delete[] fileOut;
 		//delete[] buffer; //результат для инфо панели
