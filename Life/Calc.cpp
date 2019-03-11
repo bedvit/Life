@@ -31,7 +31,7 @@ static long LifePointRunSize;
 
 Calc::Calc()
 {
-	AreaXmin = LLONG_MAX;// LLONG_MAX;
+	AreaXmin = LONG_MAX;// LLONG_MAX;
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;

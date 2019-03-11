@@ -217,6 +217,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 			scX = grid.scalePoint;
 		}
 	}
+	////////////////////////////////
 }
 
 Rle::~Rle()

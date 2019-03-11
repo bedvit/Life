@@ -26,7 +26,7 @@ public:
 	void DelLife();
 	long Generation;
 	long Population;
-	long AreaXmin;;//LONGLONG AreaXmin;
+	long AreaXmin;
 	long AreaYmin;
 	long AreaXmax;
 	long AreaYmax;

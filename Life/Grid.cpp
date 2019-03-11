@@ -16,6 +16,9 @@ Grid::Grid()
 	position.y = 0;//центр
 	scalePoint = 16; // По-умолчанию ширина клетки 16 пикселей
 	updateBuffer = true;
+	updateInfo = true;
+	bool zoom = false;
+	bool autoZoom = false;
 
 }
 
@@ -148,8 +151,9 @@ void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Poin
 
 	if (updateBuffer) //если перезаполняем буфер
 	{
-		delete[] lpBitmapBitsBuffer;
-		lpBitmapBitsBuffer = new unsigned char[indexMax];
+		//delete[] lpBitmapBitsBuffer;
+		//lpBitmapBitsBuffer = new unsigned char[indexMax];
+		lpBitmapBitsBuffer = lpBitmapBits;
 		delete[] PointCount;
 		PointCount = new long[(sizeBuffer.x+32)*(sizeBuffer.y+32)]();
 
@@ -255,12 +259,12 @@ void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Poin
 				}
 			}
 		}
-		memcpy(lpBitmapBitsBuffer, lpBitmapBits, indexMax); //копируем в буфер сетку и клетки
-		updateBuffer = false; //буфер обновлен
+		//memcpy(lpBitmapBitsBuffer, lpBitmapBits, indexMax); //копируем в буфер сетку и клетки
+		//updateBuffer = false; //буфер обновлен
 	} 
 	else
 	{
-	memcpy(lpBitmapBits, lpBitmapBitsBuffer, indexMax); //копируем сетку и квадраты на холст
+	//memcpy(lpBitmapBits, lpBitmapBitsBuffer, indexMax); //копируем сетку и квадраты на холст
 	}
 }
 
@@ -359,3 +363,36 @@ void Grid::DrawPoint(Point &point)
 		}
 	}
 }
+
+
+//RECT rect;
+//GetClientRect(hWnd, &rect);// $$$$$ Узнаем размеры клиентского окна.
+////автомасштабирование
+//scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
+//scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
+//if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
+//if (scX > 32) scX = 32; //макс 32 пикселей
+//scale = 33;
+//if (scX < 1) scX = (long)(-1.00 / scX - 1);
+//while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
+//{
+//	if (scale == 1) scale = -2;
+//	else if (scale <= -32) scale = scale * 2;
+//	else scale--;
+
+//	if (scale <= scX)
+//	{
+//		grid.scalePoint = scale;
+//		scX = grid.scalePoint;
+//	}
+//}
+//
+//if (grid.scalePoint < 1)//корректируем координаты сетки
+//{
+//	grid.position = { calc.AreaXmin/ grid.scalePoint+1, calc.AreaYmin/ grid.scalePoint+1 };
+//}
+//else
+//{
+//	grid.position = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
+//}
+//grid.updateBuffer = true; //перерисовываем сетку
