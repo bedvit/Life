@@ -29,6 +29,7 @@
 #define IDM_ZOOM				1011
 #define IDM_INFO				1012
 #define IDM_AUTOZOOM			1013
+#define IDM_AREALIFE			1014
 
 // Следующие стандартные значения для новых объектов
 //

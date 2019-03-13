@@ -1,14 +1,9 @@
 #include "stdafx.h"
 #include <iostream> 
 #include "Grid.h"
-//#include "Calc.h"
-//#include <unordered_map>
 
 static Point sizeBuffer;
-static unsigned char* lpBitmapBitsBuffer;
-//std::vector<long> PointCount;
 static long* PointCount ;
-
 
 Grid::Grid()
 {
@@ -19,12 +14,10 @@ Grid::Grid()
 	updateInfo = true;
 	bool zoom = false;
 	bool autoZoom = false;
-
 }
 
 Grid::~Grid()
 {
-	//delete[] lpBitmapBitsBuffer;
 }
 
 
@@ -54,52 +47,6 @@ Point Grid::GetCell(Point hDCPosition)
 
 	return res;
 }
-
-//
-//void Grid::DrawLine(HDC hDC, Point size)
-//{
-//	// ¬ыводим сетку
-//	if (scalePoint >= 3)//не рисуем сетку при €чейке < 4 пиксел€  
-//	{	
-//	double scale;
-//	if (scalePoint <1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-//	HPEN hPen, OldPen; //ќбъ€вл€етс€ перо
-//
-//	long startFade = 16;
-//	long grayScale = 222;
-//
-//	if (scale >= 3 && scale <= startFade) //делаем постепенный переход сетки
-//	{
-//		grayScale = 222 + (startFade - scale) * 32 / ((startFade)-2);
-//	}
-//
-//	hPen = CreatePen(PS_SOLID, 1, RGB(grayScale, grayScale, grayScale)); //создаЄм перо нужного цвета
-//	OldPen = (HPEN)SelectObject(hDC, hPen); //ќбъект делаетс€ текущим
-//
-//	long px = position.x % (long)scale-1; // x координата первой вертикальной линии 
-//	long py = position.y % (long)scale-1; // y координата первой вертикальной линии 
-//
-//	long wx = size.x / scale + 1; // количество линий по горизонтали, видимых а окне
-//	long wy = size.y / scale + 1; // количество линий по вертикали, видимых а окне
-//
-//	// —начала вертикальные линии
-//		for (long x = 0; x < wx; x++)
-//		{
-//			MoveToEx(hDC, px + x * scale, 0, NULL); // ѕоставим точку
-//			LineTo(hDC, px + x * scale, size.y); // ќт неЄ проведем линию
-//		}
-//		// ѕотом горизонтальные
-//		for (long y = 0; y < wy; y++)
-//		{
-//			MoveToEx(hDC, 0, py + y * scale, NULL);
-//			LineTo(hDC, size.x, py + y * scale);
-//		}
-//
-//	SelectObject(hDC, OldPen);
-//	DeleteObject(hPen);
-//	DeleteObject(OldPen);
-//	}
-//}
 
 void Grid::AddScale(long x, long y) // ”величить масштаб отталкива€сь от точки x, y
 {
@@ -139,7 +86,7 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 	position.y = y - (float)zy * scale;
 }
 
-void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Point>& LifePoint, RECT& rect)
+void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, Point>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
 {
 		/*Point size;*/
 	sizeBuffer.x = rect.right - rect.left + 1;
@@ -149,11 +96,17 @@ void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Poin
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 
+	//если ареал по живым
+	if (areaLife)//если ареал по живым
+	{
+		AreaXmin = LONG_MAX;
+		AreaYmin = LONG_MAX;
+		AreaXmax = LONG_MIN;
+		AreaYmax = LONG_MIN;
+	}
+
 	if (updateBuffer) //если перезаполн€ем буфер
 	{
-		//delete[] lpBitmapBitsBuffer;
-		//lpBitmapBitsBuffer = new unsigned char[indexMax];
-		lpBitmapBitsBuffer = lpBitmapBits;
 		delete[] PointCount;
 		PointCount = new long[(sizeBuffer.x+32)*(sizeBuffer.y+32)]();
 
@@ -255,17 +208,20 @@ void Grid::Draw(unsigned char*& lpBitmapBits, std::unordered_map <LONGLONG, Poin
 						}
 					}
 					//добавл€ем данные в PointCount о количестве €чеек в пикселе
-					PointCount[(r.top+32)*(sizeBuffer.y+32)+(r.left+32)]++;
+					PointCount[(r.top + 32)*(sizeBuffer.x + 32) + (r.left + 32)]++;
+				}
+
+				//если ареал по живым
+				if (areaLife)//если ареал по живым
+				{
+					if (AreaXmin > i->second.x)AreaXmin = i->second.x;//расчет ареала 
+					if (AreaYmin > i->second.y)AreaYmin = i->second.y;
+					if (AreaXmax < i->second.x)AreaXmax = i->second.x;
+					if (AreaYmax < i->second.y)AreaYmax = i->second.y;
 				}
 			}
 		}
-		//memcpy(lpBitmapBitsBuffer, lpBitmapBits, indexMax); //копируем в буфер сетку и клетки
-		//updateBuffer = false; //буфер обновлен
 	} 
-	else
-	{
-	//memcpy(lpBitmapBits, lpBitmapBitsBuffer, indexMax); //копируем сетку и квадраты на холст
-	}
 }
 
 void Grid::DrawPoint(Point &point)
@@ -289,16 +245,12 @@ void Grid::DrawPoint(Point &point)
 	r.right = r.left + scale;//X-координата нижнего правого угла пр€моугольника.
 	r.bottom = r.top + scale; //Y-координата нижнего правого угла пр€моугольника.
 
-	if (r.right >= 0 && r.bottom >= 0 && r.left <= sizeBuffer.x-1 && r.top <= sizeBuffer.y-1)
+	if (r.right >= 0 && r.bottom >= 0 && r.left < sizeBuffer.x && r.top < sizeBuffer.y)
 	{
-		indexP = (r.top + 32)*(sizeBuffer.y + 32) + (r.left + 32);
-		if (point.life)	PointCount[indexP]++;//добавл€ем данные в PointCount о количестве €чеек в пикселе
-		else PointCount[indexP]--;//добавл€ем данные в PointCount о количестве €чеек в пикселе
+		indexP = (r.top + 32)*(sizeBuffer.x + 32) + (r.left + 32);
+		if (point.life)	++PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
+		else --PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
 		
-		//PointCount[0] = 54645;
-		//long nn = PointCount[0];
-		//nn = PointCount[indexP];
-
 		if (PointCount[indexP] == 1) //отрисовываем квадрат
 		{
 			long yMax = scale - 1;
@@ -323,9 +275,9 @@ void Grid::DrawPoint(Point &point)
 					long index = sizeBuffer.x * 4 * yy + xx * 4;
 					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
 					{
-						lpBitmapBitsBuffer[index + 0] = 0; // blue
-						lpBitmapBitsBuffer[index + 1] = 0; // green
-						lpBitmapBitsBuffer[index + 2] = 0; // red 
+						lpBitmapBits[index + 0] = 0; // blue
+						lpBitmapBits[index + 1] = 0; // green
+						lpBitmapBits[index + 2] = 0; // red 
 					}
 				}
 			}
@@ -345,7 +297,7 @@ void Grid::DrawPoint(Point &point)
 				xMax = 2;
 			}
 
-			for (long y = 0; y < yMax; y++)  //рисуем квадрат
+			for (long y = 0; y < yMax; y++)  //рисуем белого цвета
 			{
 				for (long x = 0; x < xMax; x++)
 				{
@@ -354,45 +306,12 @@ void Grid::DrawPoint(Point &point)
 					long index = sizeBuffer.x * 4 * yy + xx * 4;
 					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
 					{
-						lpBitmapBitsBuffer[index + 0] = 255; // blue
-						lpBitmapBitsBuffer[index + 1] = 255; // green
-						lpBitmapBitsBuffer[index + 2] = 255; // red 
+						lpBitmapBits[index + 0] = 255; // blue
+						lpBitmapBits[index + 1] = 255; // green
+						lpBitmapBits[index + 2] = 255; // red 
 					}
 				}
 			}
 		}
 	}
 }
-
-
-//RECT rect;
-//GetClientRect(hWnd, &rect);// $$$$$ ”знаем размеры клиентского окна.
-////автомасштабирование
-//scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
-//scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
-//if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
-//if (scX > 32) scX = 32; //макс 32 пикселей
-//scale = 33;
-//if (scX < 1) scX = (long)(-1.00 / scX - 1);
-//while (grid.scalePoint != scX)//подгон€ем масштаб до степени двойки
-//{
-//	if (scale == 1) scale = -2;
-//	else if (scale <= -32) scale = scale * 2;
-//	else scale--;
-
-//	if (scale <= scX)
-//	{
-//		grid.scalePoint = scale;
-//		scX = grid.scalePoint;
-//	}
-//}
-//
-//if (grid.scalePoint < 1)//корректируем координаты сетки
-//{
-//	grid.position = { calc.AreaXmin/ grid.scalePoint+1, calc.AreaYmin/ grid.scalePoint+1 };
-//}
-//else
-//{
-//	grid.position = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
-//}
-//grid.updateBuffer = true; //перерисовываем сетку

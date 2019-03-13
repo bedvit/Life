@@ -3,31 +3,16 @@
 //#include "Grid.h"
 //#include "Life.h"
 #include <unordered_map>
-#include <map>
+#include <deque>
+#include <vector>
 #include <thread>
 
 #define SIZE_ARRAY 1000000
 
-//Grid grid_;
-
 static long generation = 0;
-//static long generationOld = 0;
-//static long population = 0;
-//static long areaXmin= LONG_MAX;
-//static long areaYmin= LONG_MAX;
-//static long areaXmax= LONG_MIN;
-//static long areaYmax= LONG_MIN;
-//static std::unordered_map <LONGLONG, Point> LifePoint;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRun;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRunNew;
-//static std::unordered_map <LONGLONG, Point> LifePointO;
 static long LifePointRunSize;
-//static long LifePointRunSizeTmp;
-
-//bool CalcEnd = true; //вычисления закончены - готов расчет нового поколения
-
-//static std::unordered_map<LONGLONG, Point> LifePointRun;
-
 
 Calc::Calc()
 {
@@ -35,13 +20,6 @@ Calc::Calc()
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;
-	//Generation = generation;
-	//Population = population;
-	//AreaXmin = areaXmin;
-	//AreaYmin = areaYmin;
-	//AreaXmax = areaXmax;
-	//AreaYmax = areaYmax;
-	//CalcEnd = true;
 }
 
 LONGLONG Calc::HashPoint(Point point)
@@ -100,7 +78,10 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 					{
 						Population--;
 						i->second.life = false;
-						grid.DrawPoint(i->second);//удяляем в массиве для вывода
+						if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
+						{
+							grid.DrawPoint(i->second);
+						}
 						i->second.update++;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
@@ -140,7 +121,10 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 				{
 					Population++;
 					i->second.life = true;
-					grid.DrawPoint(i->second);//добавляем в массиве для вывода
+					if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
+					{
+						grid.DrawPoint(i->second);
+					}
 					i->second.update++;
 					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 					{
@@ -189,16 +173,9 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, Point>::iterator i, bool point
 	}
 }
 
-//long Calc::Generation(){ return generation;}
-//long Calc::AreaXmin() { return areaXmin; }
-//long Calc::AreaYmin() { return areaYmin; }
-//long Calc::AreaXmax() { return areaXmax; }
-//long Calc::AreaYmax() { return areaYmax; }
-
 void Calc::RunLife(Grid& grid)
 {
 	long LifePointRunSizeNew = LifePointRunNew.size(); //размер массива RUNtmp
-	//long LifePointRunSizeOld = LifePointRunSize;
 	long LifePointRunSizeTmp = 0;
 	for (long j = 0; j < LifePointRunSize; j++) //считаем новое поколение по RUN
 	{
@@ -258,35 +235,8 @@ void Calc::RunLife(Grid& grid)
 		}
 	}
 	++Generation;
-	CalcEnd = true;
 }
 
-//void Calc::RunLifeTread()
-//{
-//	//while (!CalcEnd)
-//	//{
-//	//	int x = 0;
-//	//}
-//	//сохраняем данные, запускаем новый расчет в отдельном потоке
-//	Update();
-//	CalcEnd = false;
-//
-//std::vector<std::thread> thr(1); //для запуска потоков
-//for (int i = 1; i <= 1; i++) thr[i - 1] = std::thread(&Calc::RunLife, this);
-////for (int i = 1; i <= 1; i++) thr[i - 1].detach(); //отделяем потоки
-//for (int i = 1; i <= 1; i++) thr[i - 1].join(); //ждем все потоки
-//}
-
-//void Calc::Update()
-//{
-//	Generation = generation;
-//	Population = population;
-//	AreaXmin = areaXmin;
-//	AreaYmin = areaYmin;
-//	AreaXmax = areaXmax;
-//	AreaYmax = areaYmax;
-//	//LifePointOut = LifePointO;
-//}
 void Calc::RunLifeStep(long& step, Grid& grid)
 {
 	long stepTmp = 0;
@@ -300,11 +250,9 @@ void Calc::RunLifeStep(long& step, Grid& grid)
 void Calc::DelLife()
 {
 	LifePoint.clear();
-	//LifePointOut.clear();
 	Generation = 0;
 	Population = 0;
 	LifePointRunSize = 0;
-	//LifePointRunSizeTmp = 0;
 	AreaXmin = LONG_MAX;
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;

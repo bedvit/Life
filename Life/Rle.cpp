@@ -3,7 +3,6 @@
 #include <string>
 #include <fstream>
 #include "rle.h"
-//#include "Calc.h"
 #include "Point.h"
 #include <algorithm>
 
@@ -15,10 +14,10 @@ Rle::Rle()
 void Rle::Save(std::wstring name, Calc& calc)
 {
 	Point point;
-	long areaXmin = calc.AreaXmin;
-	long areaYmin = calc.AreaYmin;
-	long areaXmax = calc.AreaXmax;
-	long areaYmax = calc.AreaYmax;
+	long areaXmin = LONG_MAX;
+	long areaYmin = LONG_MAX;
+	long areaXmax = LONG_MIN;
+	long areaYmax = LONG_MIN;
 	long dupO = 0;
 	long dupB = 0;
 	long dup$ = 0;
@@ -26,6 +25,21 @@ void Rle::Save(std::wstring name, Calc& calc)
 	long dupBold = 0;
 	long dup$old = 0;
 	long strLineSize = 0;
+
+	//////////////////расчет ареала по живым для сохранения в файл
+	std::unordered_map<LONGLONG, Point>::iterator i;
+	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
+	{
+		if (i->second.life)
+		{
+			if (areaXmin > i->second.x)areaXmin = i->second.x;//расчет ареала 
+			if (areaYmin > i->second.y)areaYmin = i->second.y;
+			if (areaXmax < i->second.x)areaXmax = i->second.x;
+			if (areaYmax < i->second.y)areaYmax = i->second.y;
+		}
+	}
+	//////////////////
+
 
 	std::string strOut("x = " + std::to_string(areaXmax - areaXmin+1) + ", y = " + std::to_string(areaYmax - areaYmin+1) + ", rule = B3/S23\n");
 	std::string strLine;
