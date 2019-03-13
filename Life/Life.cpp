@@ -49,9 +49,11 @@ wchar_t *end;
 wchar_t szFileName[MAX_PATH] = L"";
 OPENFILENAME ofn;
 wchar_t fileOut[MAX_PATH] = L"Life.rle";
-wchar_t buffer[255]; //результат для инфо панели
+wchar_t buffer[MAX_PATH]; //результат для инфо панели
 wchar_t bufferTmp[255]; //результат для инфо панели
 char vOutChar[255];
+static std::wstring nameWin;
+static std::wstring nameWinNew;
 
 HFONT hFont = CreateFont(16, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Segoe UI"));
 
@@ -147,6 +149,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    if (!hWnd) return FALSE;
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
+   GetWindowText(hWnd, buffer, 255); //заголовок
+   nameWin = std::wstring(buffer);
    
    //создаем свое меню
    RECT rect = { 0 };
@@ -224,6 +228,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				GenerationFix = 0;
 				grid.position = {0,0}; // позиция начала координат сетки относительно левого верхнего угла окна в пискселях
 				grid.scalePoint = 16;
+				//заголовок
+				nameWinNew = L"* - " + nameWin;
+				SetWindowText(hWnd, nameWinNew.c_str());
+				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
@@ -248,6 +256,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					//ShowWindow(hWnd, SW_MAXIMIZE);//Максимизирует указанное окно.
 					rle.Load(ofn.lpstrFile, calc, rect, grid);
 				}
+				//заголовок
+				nameWinNew = std::wstring(ofn.lpstrFile);
+				nameWinNew = nameWinNew.substr(nameWinNew.find_last_of(L"\\") + 1, std::wstring::npos);
+				nameWinNew = nameWinNew + L" - " + nameWin;
+				SetWindowText(hWnd, nameWinNew.c_str());
+				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
@@ -256,7 +270,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.lStructSize =  OPENFILENAME_SIZE_VERSION_400; // SEE NOTE BELOW
 				ofn.hwndOwner = hWnd;
 				ofn.lpstrFilter = L"Text Files (*.rle)\0*.rle\0All Files (*.*)\0*.*\0";
-				ofn.lpstrFile = szFileName;
+				//ofn.lpstrFile = szFileName;
 				ofn.nMaxFile = MAX_PATH;
 				ofn.lpstrFile = fileOut;
 				ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;
@@ -265,6 +279,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (GetSaveFileName(&ofn))
 				{
 					rle.Save(ofn.lpstrFile, calc);
+					//заголовок
+					nameWinNew = std::wstring(ofn.lpstrFile);
+					nameWinNew = nameWinNew.substr(nameWinNew.find_last_of(L"\\") + 1, std::wstring::npos);
+					nameWinNew = nameWinNew + L" - " + nameWin;
+					SetWindowText(hWnd, nameWinNew.c_str());
+					////
 				}
 				break;
 			case IDM_RETURN_TO_ZERO:
@@ -400,15 +420,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (grid.updateInfo)
 			{
 				//ИНФО ПАНЕЛЬ
-				RECT rectTxt; //координаты текста
 				SelectObject(hMemDC, hFont);
 				SetTextColor(hMemDC, RGB(0, 0, 0));
 				long Xstart = rect.right - 100; //для авто-выравнивания
 				long Ystart = 0;
 				long break1 = 15;
 				long break2 = 25;
-				int decimal;
-				int sign;
 
 				PatBlt(hMemDC, Xstart, Ystart, 100, 475, WHITENESS);//закрашиваем прямоугольник белым фоном
 
