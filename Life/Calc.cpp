@@ -1,13 +1,11 @@
 #include "stdafx.h"
 #include "Calc.h"
-//#include "Grid.h"
-//#include "Life.h"
 #include <unordered_map>
 #include <deque>
 #include <vector>
 #include <thread>
 
-#define SIZE_ARRAY 1000000
+#define SIZE_ARRAY 5000000
 
 static long generation = 0;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRun;
@@ -20,6 +18,7 @@ Calc::Calc()
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;
+	LifePoint.reserve(SIZE_ARRAY);
 }
 
 LONGLONG Calc::HashPoint(Point point)

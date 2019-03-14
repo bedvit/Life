@@ -27,9 +27,9 @@ Point mousePosPoint; //Здесь будем хранить позицию мы�
 Point calcPoint;
 
 static int wheelDelta = 0; // требуется для считывания колесика мышки
-bool DragEnabled; // Для таскания грида правой кнопкой мыши
-bool LbuttonClick; // Для выделения ячеек левой кнопкой мыши
-bool pointDelete; // Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
+bool DragEnabled=false; // Для таскания грида правой кнопкой мыши
+bool LbuttonClick=false; // Для выделения ячеек левой кнопкой мыши
+bool pointDelete=false; // Для выделения/снятия выделения ячеек левой кнопкой мыши, при клике и движении мышки
 unsigned int start_time; // = clock();
 unsigned int end_time; // = clock(); // конечное время
 unsigned int search_time; // = end_time - start_time; // искомое время
@@ -350,7 +350,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			size.x = rect.right - rect.left+1;// + 1; //ширина
 			size.y = rect.bottom - rect.top+1;// + 1; //высота
-			
+			bool update=false;
 
 			if (grid.autoZoom || grid.zoom) //автомасштабирование
 			{
@@ -359,11 +359,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				double scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
 				if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
 				if (scX > 32) scX = 32; //макс 32 пикселей
-				if ((long)scX != grid.scalePoint) //если масштаб другой - пересчитываем
-				{
+				long scalePointTmp = grid.scalePoint;
 					double scale = 33;
-					if (scX < 1) scX = (long)(-1.00 / scX - 1);
-					while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
+					if (scX < 1) scX = (-1.00 / scX - 1);
+					while (scalePointTmp != scX)//подгоняем масштаб до степени двойки
 					{
 						if (scale == 1) scale = -2;
 						else if (scale <= -32) scale = scale * 2;
@@ -371,28 +370,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 						if (scale <= scX)
 						{
-							grid.scalePoint = scale;
-							scX = grid.scalePoint;
+							scalePointTmp = scale;
+							scX = scalePointTmp;
 						}
 					}
-				}
+					if (grid.scalePoint != scalePointTmp)//перерисовываем если изменился масштаб или определяется ареал по живым
+					{
+						grid.scalePoint = scalePointTmp;
+						grid.updateBuffer = true; //обновляем буфер
+					}
 
-				if (grid.scalePoint < 1)//корректируем координаты сетки
-				{
-					grid.position = { calc.AreaXmin / grid.scalePoint + 1, calc.AreaYmin / grid.scalePoint + 1 };
-				}
-				else
-				{
-					grid.position = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
-				}
-				grid.updateBuffer = true; //перерисовываем сетку
+					Point positionTmp;
+					if (grid.scalePoint < 1)//корректируем координаты сетки
+					{
+						positionTmp = { calc.AreaXmin / grid.scalePoint + 1, calc.AreaYmin / grid.scalePoint + 1 };
+					}
+					else
+					{
+						positionTmp = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
+					}
+
+					if (grid.position.x!=positionTmp.x || grid.position.y!= positionTmp.y)
+					{
+						grid.position.x = positionTmp.x;
+						grid.position.y = positionTmp.y;
+						grid.updateBuffer = true; //обновляем буфер
+					}
 				grid.zoom = false;
 			}
 
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);// hdc это инструмент для рисования в клиентской области окна
 			HDC hMemDC = CreateCompatibleDC(hdc); //двойная буферизация
-			HGDIOBJ oldBmp;// = SelectObject(hMemDC, bitmap);
+			HGDIOBJ oldBmp;
 			if (grid.updateBuffer || grid.areaLife)
 			{
 				BITMAPINFO bi;
@@ -659,6 +669,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_MOUSELEAVE: //Сообщение WM_MOUSELEAVE посылается в окно тогда, когда курсор оставляет рабочую область окна, заданную при предшествующем вызове функции TrackMouseEvent.
 		LbuttonClick=false; //отключаем выделение
+		DragEnabled = false; // Выключим режим таскания. Если не выключить, сетка будет вечно ходить за мышкой.
 		break;
 
 	case WM_RBUTTONUP: // Правая кнопка отжата
@@ -672,10 +683,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		GenerationFix = calc.Generation;
 		break;
 	case WM_ERASEBKGND://фон окна должен быть стерт (например, когда окно изменено)
+		return true;
+	case WM_SIZE: //изменения размеров окна
 		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 		GenerationFix = calc.Generation;
 		grid.updateBuffer = true; //перерисовываем линии
-		return true;
+		break;
 
 	case WM_MOUSEWHEEL: // Колесо мышки
 
