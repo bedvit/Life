@@ -54,6 +54,7 @@ wchar_t bufferTmp[255]; //результат для инфо панели
 char vOutChar[255];
 static std::wstring nameWin;
 static std::wstring nameWinNew;
+bool RunLife=false;
 
 HFONT hFont = CreateFont(16, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Segoe UI"));
 
@@ -210,6 +211,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
+				RunLife = true;
 				GetWindowTextW(hWndEdit1, buf, 255); //забираем данные о замедлении из пользовательского меню
 				SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
 				start_time = clock()- search_time;
@@ -219,6 +221,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				step = wcstol(buf, &end, 10);
 				break;
 			case IDM_STOP:
+				RunLife = false;
 				KillTimer(hWnd, 123);
 				break;
 			case IDM_NEW:
@@ -660,11 +663,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
 			}
 		}
-		else
+		else //координаты мыши на экране 
 		{
 			mousePos.x = xPos;  // Запомним координаты мыши
 			mousePos.y = yPos;
-			InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
+			if (!RunLife)
+			{
+				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
+			}
 		}
 		break;
 	case WM_MOUSELEAVE: //Сообщение WM_MOUSELEAVE посылается в окно тогда, когда курсор оставляет рабочую область окна, заданную при предшествующем вызове функции TrackMouseEvent.
