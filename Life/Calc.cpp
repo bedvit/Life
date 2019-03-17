@@ -5,7 +5,9 @@
 #include <vector>
 #include <thread>
 
-#define SIZE_ARRAY 5000000
+//#define SIZE_ARRAY 10000000  //5 млн живых
+//#define SIZE_ARRAY 50000000  //11 млн живых
+#define SIZE_ARRAY 5000000  //
 
 static long generation = 0;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRun;
@@ -214,7 +216,7 @@ void Calc::RunLife(Grid& grid)
 		}
 	}
 	
-		//удаляем пустые точки (если в массиве size больше 1 млн)
+		//удаляем пустые точки (если в массиве size больше SIZE_ARRAY)
 	if (LifePoint.size() > SIZE_ARRAY)
 	{
 		std::vector<std::unordered_map<LONGLONG, Point>::iterator> NullPoint(LifePoint.size());

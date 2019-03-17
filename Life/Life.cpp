@@ -225,6 +225,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				KillTimer(hWnd, 123);
 				break;
 			case IDM_NEW:
+				RunLife = false;
 				KillTimer(hWnd, 123);
 				calc.DelLife();
 				search_time = 0;
@@ -239,6 +240,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_OPEN:
+				RunLife = false;
+				KillTimer(hWnd, 123);
 				ZeroMemory(&ofn, sizeof(ofn));
 				ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
 				ofn.hwndOwner = hWnd;
@@ -269,6 +272,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_SAVE:
+				RunLife = false;
+				KillTimer(hWnd, 123);
 				ZeroMemory(&ofn, sizeof(ofn));
 				ofn.lStructSize =  OPENFILENAME_SIZE_VERSION_400; // SEE NOTE BELOW
 				ofn.hwndOwner = hWnd;
