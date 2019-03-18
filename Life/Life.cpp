@@ -368,7 +368,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (scX > 32) scX = 32; //макс 32 пикселей
 				long scalePointTmp = grid.scalePoint;
 					double scale = 33;
-					if (scX < 1) scX = (-1.00 / scX - 1);
+					if (scX < 1) scX = (long)(-1.00 / scX - 1);
 					while (scalePointTmp != scX)//подгоняем масштаб до степени двойки
 					{
 						if (scale == 1) scale = -2;
