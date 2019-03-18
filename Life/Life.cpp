@@ -278,7 +278,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ofn.lStructSize =  OPENFILENAME_SIZE_VERSION_400; // SEE NOTE BELOW
 				ofn.hwndOwner = hWnd;
 				ofn.lpstrFilter = L"Text Files (*.rle)\0*.rle\0All Files (*.*)\0*.*\0";
-				//ofn.lpstrFile = szFileName;
 				ofn.nMaxFile = MAX_PATH;
 				ofn.lpstrFile = fileOut;
 				ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;

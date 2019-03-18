@@ -5,9 +5,7 @@
 #include <vector>
 #include <thread>
 
-//#define SIZE_ARRAY 10000000  //5 млн живых
-//#define SIZE_ARRAY 50000000  //11 млн живых
-#define SIZE_ARRAY 5000000  //
+#define SIZE_ARRAY 5000000
 
 static long generation = 0;
 static std::vector<std::unordered_map<LONGLONG, Point>::iterator> LifePointRun;
@@ -191,6 +189,10 @@ void Calc::RunLife(Grid& grid)
 			}
 			LifePointRunNew[++LifePointRunSizeTmp-1]= LifePointRun[j];
 		}
+		else if (LifePointRun[j]->second.state < 1 && LifePointRun[j]->second.life == false)//удаляем пустые ячейки
+		{
+			LifePoint.erase(LifePointRun[j]);
+		}
 		else if((LifePointRun[j]->second.state > 3 || LifePointRun[j]->second.state < 2) && LifePointRun[j]->second.life == true)//удаляем
 		{
 			LifePointRun[j]->second.life = false;
@@ -213,26 +215,6 @@ void Calc::RunLife(Grid& grid)
 		else if (!LifePointRunNew[j]->second.life)
 		{
 			InsertRun(LifePointRunNew[j], true, grid);
-		}
-	}
-	
-		//удаляем пустые точки (если в массиве size больше SIZE_ARRAY)
-	if (LifePoint.size() > SIZE_ARRAY)
-	{
-		std::vector<std::unordered_map<LONGLONG, Point>::iterator> NullPoint(LifePoint.size());
-		long NullPointSize = 0;
-		std::unordered_map<LONGLONG, Point>::iterator i;
-		for (i = LifePoint.begin(); i != LifePoint.end(); i++)
-		{
-			if (i->second.state < 1 && i->second.life == false)
-			{
-				NullPoint[NullPointSize] = i;
-				NullPointSize++;
-			}
-		}
-		for (long j = 0; j < NullPointSize; j++)
-		{
-			LifePoint.erase(NullPoint[j]);
 		}
 	}
 	++Generation;
