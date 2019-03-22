@@ -24,7 +24,7 @@
 #define IDM_BREAK1				1006
 #define IDM_BREAK2				1007
 #define IDM_BREAK3				1008
-#define IDM_BREAK4				1009
+
 #define IDM_RETURN_TO_ZERO		1010
 #define IDM_ZOOM				1011
 #define IDM_INFO				1012

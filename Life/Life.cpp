@@ -6,7 +6,6 @@
 #include <Windows.h>
 #include "commdlg.h"
 #include "shellapi.h"
-//#include "Calc.h"
 
 #define MAX_LOADSTRING 100
 #define WM_SETFONT     0x0020
@@ -157,8 +156,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    RECT rect = { 0 };
   // GetWindowRect(hWnd, &rect); //в координатах экрана
 	GetClientRect(hWnd, &rect); //в координатах пользовательского окна
-	hWndEdit1 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	hWndEdit2 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	hWndEdit1 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE| ES_NUMBER, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	hWndEdit2 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE| ES_NUMBER| ES_WANTRETURN, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 	hWndEdit3 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE| WS_DISABLED, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 	hWndEdit4 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE | WS_DISABLED, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 
@@ -596,6 +595,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
 	case WM_LBUTTONDOWN: // $ Левая кнопка нажата
+		SetFocus(hWnd); //фокус на главную форму
 		if (grid.scalePoint >= 1) // не рисуем при масштабе меньше 1 
 		{
 			LbuttonClick = true; // Включим режим выделения клеток
@@ -667,11 +667,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
 			}
 		}
-		else //координаты мыши на экране 
+		else // при остальных вариантах движения курсора мыши по пользовательской форме.
 		{
 			mousePos.x = xPos;  // Запомним координаты мыши
 			mousePos.y = yPos;
-			if (!RunLife)
+			//RECT rect = { 0 };
+			//GetClientRect(hWndEdit1, &rect);
+			//if (xPos < rect.left) 
+			//{
+				SetFocus(hWnd); //фокус на главную форму
+			//}
+			if (!RunLife) //перерисовываем координаты мыши
 			{
 				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
 			}
@@ -721,6 +727,43 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 		GenerationFix = calc.Generation;
 		break;
+
+
+	//case WM_CHAR:
+	//	switch (wParam)
+	//	{
+	//	case 0x1B:// Process an escape. 
+	//		//if (IDYES == MessageBox(hWnd, L"Are you sure you want to exit?", L"Quit Application",
+	//		//	MB_ICONQUESTION + MB_YESNO))
+	//		//{
+	//		//PostQuitMessage(0);
+	//		//}
+	//		//DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+	//		break;
+
+	//	case VK_RETURN:
+	//		DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+	//		SetFocus(hWnd); //фокус на главную форму
+	//		break;
+
+	//	}
+	//case WM_KEYDOWN:
+	//	switch (wParam)
+	//	{
+	//	case VK_F5:
+	//		DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+	//		break;
+
+	//	//case VK_RETURN:
+	//	//	DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+	//	//	SetFocus(hWnd); //фокус на главную форму
+	//	//	break;
+
+	//	}
+
+		break;
+
+
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
     }

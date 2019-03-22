@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include <iostream>
 #include <string>
 #include <fstream>
 #include "rle.h"
@@ -10,6 +9,12 @@
 Rle::Rle()
 {
 }
+
+union ULL
+{
+	LONGLONG U;
+	long L[2];
+};
 
 void Rle::Save(std::wstring name, Calc& calc)
 {
@@ -25,17 +30,19 @@ void Rle::Save(std::wstring name, Calc& calc)
 	long dupBold = 0;
 	long dup$old = 0;
 	long strLineSize = 0;
+	ULL ull;
 
 	//////////////////расчет ареала по живым для сохранения в файл
-	std::unordered_map<LONGLONG, Point>::iterator i;
+	std::unordered_map<LONGLONG, unsigned char>::iterator i;
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
 	{
-		if (i->second.life)
+		if (((i->second >> 6) & 1) == 1)
 		{
-			if (areaXmin > i->second.x)areaXmin = i->second.x;//расчет ареала 
-			if (areaYmin > i->second.y)areaYmin = i->second.y;
-			if (areaXmax < i->second.x)areaXmax = i->second.x;
-			if (areaYmax < i->second.y)areaYmax = i->second.y;
+			ull.U = i->first;
+			if (areaXmin > ull.L[0])areaXmin = ull.L[0];//расчет ареала 
+			if (areaYmin > ull.L[1])areaYmin = ull.L[1];
+			if (areaXmax < ull.L[0])areaXmax = ull.L[0];
+			if (areaYmax < ull.L[1])areaYmax = ull.L[1];
 		}
 	}
 	//////////////////

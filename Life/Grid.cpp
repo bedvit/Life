@@ -20,6 +20,11 @@ Grid::~Grid()
 {
 }
 
+union ULL
+{
+	LONGLONG U;
+	long L[2];
+};
 
 void Grid::Move(long x, long y)
 {
@@ -86,7 +91,7 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 	position.y = y - (float)zy * scale;
 }
 
-void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, Point>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
+void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
 {
 		/*Point size;*/
 	sizeBuffer.x = rect.right - rect.left + 1;
@@ -95,6 +100,7 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, Point>& LifePoint, long
 	long indexMax = sizeBuffer.x*sizeBuffer.y * 4;
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
+	ULL ull;
 
 	//если ареал по живым
 	if (areaLife)//если ареал по живым
@@ -158,22 +164,23 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, Point>& LifePoint, long
 		}
 
 		//выводим живые клетки
-		std::unordered_map<LONGLONG, Point>::iterator i;
+		std::unordered_map<LONGLONG, unsigned char>::iterator i;
 		for (i = LifePoint.begin(); i != LifePoint.end(); i++)
 		{
-			if (i->second.life)
+			if (((i->second >> 6) & 1) == 1)//(i->second.life)
 			{
 				RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+				ull.U = i->first;
 
-				if (i->second.x < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
-					r.left = (double)i->second.x * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
+				if (ull.L[0] < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+					r.left = (double)ull.L[0] * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
 				else
-					r.left = (double)i->second.x * scale + position.x; //?
+					r.left = (double)ull.L[0] * scale + position.x; //?
 
-				if (i->second.y < 0 && scale < 1)
-					r.top = (double)i->second.y * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
+				if (ull.L[1] < 0 && scale < 1)
+					r.top = (double)ull.L[1] * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
 				else
-					r.top = (double)i->second.y * scale + position.y; //?
+					r.top = (double)ull.L[1] * scale + position.y; //?
 
 				r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
 				r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
@@ -214,41 +221,47 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, Point>& LifePoint, long
 				//если ареал по живым
 				if (areaLife)//если ареал по живым
 				{
-					if (AreaXmin > i->second.x)AreaXmin = i->second.x;//расчет ареала 
-					if (AreaYmin > i->second.y)AreaYmin = i->second.y;
-					if (AreaXmax < i->second.x)AreaXmax = i->second.x;
-					if (AreaYmax < i->second.y)AreaYmax = i->second.y;
+					if (AreaXmin > ull.L[0])AreaXmin = ull.L[0];//расчет ареала 
+					if (AreaYmin > ull.L[1])AreaYmin = ull.L[1];
+					if (AreaXmax < ull.L[0])AreaXmax = ull.L[0];
+					if (AreaYmax < ull.L[1])AreaYmax = ull.L[1];
 				}
 			}
 		}
 	} 
 }
 
-void Grid::DrawPoint(Point &point)
+void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i)
 {
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 	long indexP;
 
-	RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+	//RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
+	long AreaXmin;//r.left
+	long AreaYmin;//r.top 
+	long AreaXmax;//r.right
+	long AreaYmax;//r.bottom
+	ULL ull;
+	ull.U = i->first;
 
-	if (point.x < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
-		r.left = (double)point.x * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
+	if (ull.L[0] < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+		AreaXmin = (double)ull.L[0] * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
 	else
-		r.left = (double)point.x * scale + position.x; //?
+		AreaXmin = (double)ull.L[0] * scale + position.x; //?
 
-	if (point.y < 0 && scale < 1)
-		r.top = (double)point.y * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
+	if (ull.L[1] < 0 && scale < 1)
+		AreaYmin = (double)ull.L[1] * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
 	else
-		r.top = (double)point.y * scale + position.y; //?
+		AreaYmin = (double)ull.L[1] * scale + position.y; //?
 
-	r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
-	r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
+	AreaXmax = AreaXmin + scale;//X-координата нижнего правого угла прямоугольника.
+	AreaYmax = AreaYmin + scale; //Y-координата нижнего правого угла прямоугольника.
 
-	if (r.right >= 0 && r.bottom >= 0 && r.left < sizeBuffer.x && r.top < sizeBuffer.y)
+	if (AreaXmax >= 0 && AreaYmax >= 0 && AreaXmin < sizeBuffer.x && AreaYmin < sizeBuffer.y)
 	{
-		indexP = (r.top + 32)*(sizeBuffer.x + 32) + (r.left + 32);
-		if (point.life)	++PointCount[indexP];//добавляем данные в PointCount о количестве ячеек в пикселе
+		indexP = (AreaYmin + 32)*(sizeBuffer.x + 32) + (AreaXmin + 32);
+		if (((i->second >> 6) & 1) == 1)	++PointCount[indexP];//добавляем данные в PointCount о количестве ячеек в пикселе
 		else --PointCount[indexP];//добавляем данные в PointCount о количестве ячеек в пикселе
 		
 		if (PointCount[indexP] == 1) //отрисовываем квадрат
@@ -270,8 +283,8 @@ void Grid::DrawPoint(Point &point)
 			{
 				for (long x = 0; x < xMax; x++)
 				{
-					long xx = r.left + x;
-					long yy = r.top + y;
+					long xx = AreaXmin + x;
+					long yy = AreaYmin + y;
 					long index = sizeBuffer.x * 4 * yy + xx * 4;
 					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
 					{
@@ -301,8 +314,8 @@ void Grid::DrawPoint(Point &point)
 			{
 				for (long x = 0; x < xMax; x++)
 				{
-					long xx = r.left + x;
-					long yy = r.top + y;
+					long xx = AreaXmin + x;
+					long yy = AreaYmin + y;
 					long index = sizeBuffer.x * 4 * yy + xx * 4;
 					if (xx >= 0 && yy >= 0 && xx < sizeBuffer.x && yy < sizeBuffer.y)
 					{
