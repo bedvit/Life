@@ -213,8 +213,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				RunLife = true;
 				GetWindowTextW(hWndEdit1, buf, 255); //забираем данные о замедлении из пользовательского меню
 				SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
-				start_time = clock()- search_time;
 				start_timeNew = clock();
+				start_time = start_timeNew - search_time;
 				GenerationFix = calc.Generation;
 				GetWindowTextW(hWndEdit2, buf, 255); //забираем данные о количестве поколений на один шаг
 				step = wcstol(buf, &end, 10);
@@ -336,8 +336,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_TIMER:
 		{
+			
 			calc.RunLifeStep(step, grid); //запуск расчета поколений
-
 			end_time = clock(); // конечное время
 			search_time = end_time - start_time; // искомое время
 			search_timeNew = end_time - start_timeNew;
