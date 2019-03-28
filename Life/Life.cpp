@@ -39,10 +39,11 @@ unsigned int search_timeNew;
 unsigned int GenerationFix;
 long step;
 
+HWND hWnd;
 HWND hWndEdit1;
 HWND hWndEdit2;
-HWND hWndEdit3;
-HWND hWndEdit4;
+//HWND hWndEdit3;
+//HWND hWndEdit4;
 wchar_t* buf = new wchar_t[255];
 wchar_t *end;
 wchar_t szFileName[MAX_PATH] = L"";
@@ -95,7 +96,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
         {
-            TranslateMessage(&msg);
+			//обработка события нажатия Enter
+			if (
+				(WM_KEYDOWN == msg.message) &&
+				(VK_RETURN == msg.wParam)
+				)
+			{
+				SetFocus(hWnd); //фокус на главную форму
+				continue;          // запрет дальнейшей обработки
+			}
+			/////
+
+			// стандартная обработка сообщения
+			TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
     }
@@ -145,7 +158,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+   hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    if (!hWnd) return FALSE;
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -158,8 +171,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	GetClientRect(hWnd, &rect); //в координатах пользовательского окна
 	hWndEdit1 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE| ES_NUMBER, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 	hWndEdit2 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE| ES_NUMBER| ES_WANTRETURN, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	hWndEdit3 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE| WS_DISABLED, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	hWndEdit4 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE | WS_DISABLED, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	//hWndEdit3 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
+	//hWndEdit4 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 
 	return TRUE;
 }
@@ -205,11 +218,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
 				DestroyWindow(hWndEdit1);
 				DestroyWindow(hWndEdit2);
-				DestroyWindow(hWndEdit3);
-				DestroyWindow(hWndEdit4);
+				//DestroyWindow(hWndEdit3);
+				//DestroyWindow(hWndEdit4);
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
+				SetFocus(hWnd); //фокус на главную форму
 				RunLife = true;
 				GetWindowTextW(hWndEdit1, buf, 255); //забираем данные о замедлении из пользовательского меню
 				SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
@@ -220,10 +234,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				step = wcstol(buf, &end, 10);
 				break;
 			case IDM_STOP:
+				SetFocus(hWnd); //фокус на главную форму
 				RunLife = false;
 				KillTimer(hWnd, 123);
 				break;
 			case IDM_NEW:
+				SetFocus(hWnd); //фокус на главную форму
 				RunLife = false;
 				KillTimer(hWnd, 123);
 				calc.DelLife();
@@ -239,6 +255,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_OPEN:
+				SetFocus(hWnd); //фокус на главную форму
 				RunLife = false;
 				KillTimer(hWnd, 123);
 				ZeroMemory(&ofn, sizeof(ofn));
@@ -271,6 +288,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_SAVE:
+				SetFocus(hWnd); //фокус на главную форму
 				RunLife = false;
 				KillTimer(hWnd, 123);
 				ZeroMemory(&ofn, sizeof(ofn));
@@ -294,35 +312,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				break;
 			case IDM_RETURN_TO_ZERO:
+				SetFocus(hWnd); //фокус на главную форму
 				grid.position = { 0,0 };
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 
 			case IDM_ZOOM:
+				SetFocus(hWnd); //фокус на главную форму
 				grid.zoom = true;
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 			case IDM_AUTOZOOM:
+				SetFocus(hWnd); //фокус на главную форму
 				grid.autoZoom= !grid.autoZoom;
-				if (grid.autoZoom) SetWindowTextW(hWndEdit3, L"ВКЛ"); else  SetWindowTextW(hWndEdit3, L"ВЫКЛ");
+				//if (grid.autoZoom) SetWindowTextW(hWndEdit3, L"ВКЛ"); else  SetWindowTextW(hWndEdit3, L"ВЫКЛ");
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 
 			case IDM_INFO:
+				SetFocus(hWnd); //фокус на главную форму
 				grid.updateInfo = !grid.updateInfo;
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
 
 			case IDM_AREALIFE:
+				SetFocus(hWnd); //фокус на главную форму
 				grid.areaLife = !grid.areaLife;
 				grid.updateBuffer = true;
-				if (grid.areaLife) SetWindowTextW(hWndEdit4, L"ВКЛ"); else  SetWindowTextW(hWndEdit4, L"ВЫКЛ");
+				//if (grid.areaLife) SetWindowTextW(hWndEdit4, L"ВКЛ"); else  SetWindowTextW(hWndEdit4, L"ВЫКЛ");
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
@@ -371,8 +394,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					while (scalePointTmp != scX)//подгоняем масштаб до степени двойки
 					{
 						if (scale == 1) scale = -2;
-						else if (scale <= -32) scale = scale * 2;
-						else scale--;
+						else if (scale <= -32) scale *= 2;
+						else --scale;
 
 						if (scale <= scX)
 						{
@@ -443,9 +466,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				long break1 = 15;
 				long break2 = 25;
 
-				PatBlt(hMemDC, Xstart, Ystart, 100, 475, WHITENESS);//закрашиваем прямоугольник белым фоном
+				PatBlt(hMemDC, Xstart, Ystart, 100, 505, WHITENESS);//закрашиваем прямоугольник белым фоном
+				TextOut(hMemDC, Xstart, Ystart, L"===ВЫВОД===", 11);//ВЫВОД
 
-				Ystart += 0;//Масштаб
+				Ystart += break1;//Масштаб
 				TextOut(hMemDC, Xstart, Ystart, L"Масштаб", 7);
 				Ystart += break1;
 				if (grid.scalePoint < 1)
@@ -545,8 +569,41 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
 		
 
-				Ystart += break2;//Замедление
+				Ystart += break2;//Автомасштаб
+				TextOut(hMemDC, Xstart, Ystart, L"Автомасштаб", 11);
+				Ystart += break1;
+				if (grid.autoZoom)
+				{
+					TextOut(hMemDC, Xstart, Ystart, L"ВКЛ", 3);
+				}
+				else
+				{
+					TextOut(hMemDC, Xstart, Ystart, L"ВЫКЛ", 4);
+				}
+				//MoveWindow(hWndEdit3, Xstart, Ystart, 100, 14, true);
+
+
+				Ystart += break2;//Ареал по живым
+				TextOut(hMemDC, Xstart, Ystart, L"Ареал по живым", 14);
+				Ystart += break1;
+				if (grid.areaLife)
+				{
+					TextOut(hMemDC, Xstart, Ystart, L"ВКЛ", 3);
+				}
+				else
+				{
+					TextOut(hMemDC, Xstart, Ystart, L"ВЫКЛ", 4);
+				}
+				//MoveWindow(hWndEdit4, Xstart, Ystart, 100, 14, true);
+
+				Ystart += break2;//ВВОД
+				TextOut(hMemDC, Xstart, Ystart, L"===ВВОД===", 10);
+
+
+				Ystart += break1;//Замедление
 				TextOut(hMemDC, Xstart, Ystart, L"Замедление, мс.", 15);
+
+
 				Ystart += break1;
 				MoveWindow(hWndEdit1, Xstart, Ystart, 100, 14, true);
 
@@ -556,25 +613,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Ystart += break1;
 				MoveWindow(hWndEdit2, Xstart, Ystart, 100, 14, true);
 
-
-				Ystart += break2;//Автомасштаб
-				TextOut(hMemDC, Xstart, Ystart, L"Автомасштаб", 11);
-				Ystart += break1;
-				MoveWindow(hWndEdit3, Xstart, Ystart, 100, 14, true);
-
-
-				Ystart += break2;//Ареал по живым
-				TextOut(hMemDC, Xstart, Ystart, L"Ареал по живым", 14);
-				Ystart += break1;
-				MoveWindow(hWndEdit4, Xstart, Ystart, 100, 14, true);
 				//ИНФО ПЕНЕЛЬ
 			}
 			else
 			{
 			MoveWindow(hWndEdit1, -100, -100, 100, 14, true);//убираем с экрана
 			MoveWindow(hWndEdit2, -100, -100, 100, 14, true);
-			MoveWindow(hWndEdit3, -100, -100, 100, 14, true);
-			MoveWindow(hWndEdit4, -100, -100, 100, 14, true);
+			//MoveWindow(hWndEdit3, -100, -100, 100, 14, true);
+			//MoveWindow(hWndEdit4, -100, -100, 100, 14, true);
 			}
 
 			BitBlt(hdc, 0, 0, size.x, size.y, hMemDC, 0, 0, SRCCOPY);
@@ -675,7 +721,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//GetClientRect(hWndEdit1, &rect);
 			//if (xPos < rect.left) 
 			//{
-				SetFocus(hWnd); //фокус на главную форму
+				//SetFocus(hWnd); //фокус на главную форму
 			//}
 			if (!RunLife) //перерисовываем координаты мыши
 			{

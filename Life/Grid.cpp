@@ -64,7 +64,7 @@ void Grid::AddScale(long x, long y) // Увеличить масштаб отталкиваясь от точки x
 
 	if (scalePoint == -2) scalePoint = 1;
 	else if (scalePoint < -32) scalePoint = scalePoint/2; 
-	else scalePoint++;
+	else ++scalePoint;
 
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 	position.x = x - (float)zx * scale; // Новые координаты центра грида, чтобы под курсором ячейка не двигалась во время масштабирования
@@ -84,7 +84,7 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 
 	if (scalePoint == 1) scalePoint = -2;
 	else if (scalePoint <= -32) scalePoint = scalePoint * 2;
-	else scalePoint--;
+	else --scalePoint;
 
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 	position.x = x - (float)zx * scale; // Новые координаты центра грида 
@@ -133,7 +133,7 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 			long xMax = sizeBuffer.x;
 
 			//горизонтальные линии
-			for (long y = py; y < yMax; y = y + scalePoint)
+			for (long y = py; y < yMax; y += scalePoint)
 			{
 				for (long x = px; x < xMax; x = x++)
 				{
@@ -148,9 +148,9 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 			}
 
 			//вертикальные линии
-			for (long x = px; x < xMax; x = x + scalePoint)
+			for (long x = px; x < xMax; x += scalePoint)
 			{
-				for (long y = py; y < yMax; y++)
+				for (long y = py; y < yMax; ++y)
 				{
 					index = xMax * 4 * y + x * 4;
 					if (x >= 0 && y >= 0)
@@ -165,7 +165,7 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 
 		//выводим живые клетки
 		std::unordered_map<LONGLONG, unsigned char>::iterator i;
-		for (i = LifePoint.begin(); i != LifePoint.end(); i++)
+		for (i = LifePoint.begin(); i != LifePoint.end(); ++i)
 		{
 			if (((i->second >> 6) & 1) == 1)//(i->second.life)
 			{
@@ -199,9 +199,9 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 
 				if (r.right >= 0 && r.bottom >= 0 && r.left <= rect.right && r.top <= rect.bottom)
 				{
-					for (long y = 0; y < yMax; y++)  //рисуем квадрат
+					for (long y = 0; y < yMax; ++y)  //рисуем квадрат
 					{
-						for (long x = 0; x < xMax; x++)
+						for (long x = 0; x < xMax; ++x)
 						{
 							long xx = r.left + x;
 							long yy = r.top + y;
@@ -279,9 +279,9 @@ void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i)
 				xMax = 2;
 			}
 
-			for (long y = 0; y < yMax; y++)  //рисуем квадрат
+			for (long y = 0; y < yMax; ++y)  //рисуем квадрат
 			{
-				for (long x = 0; x < xMax; x++)
+				for (long x = 0; x < xMax; ++x)
 				{
 					long xx = AreaXmin + x;
 					long yy = AreaYmin + y;
@@ -310,9 +310,9 @@ void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i)
 				xMax = 2;
 			}
 
-			for (long y = 0; y < yMax; y++)  //рисуем белого цвета
+			for (long y = 0; y < yMax; ++y)  //рисуем белого цвета
 			{
-				for (long x = 0; x < xMax; x++)
+				for (long x = 0; x < xMax; ++x)
 				{
 					long xx = AreaXmin + x;
 					long yy = AreaYmin + y;

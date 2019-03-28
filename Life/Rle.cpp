@@ -34,7 +34,7 @@ void Rle::Save(std::wstring name, Calc& calc)
 
 	//////////////////расчет ареала по живым для сохранения в файл
 	std::unordered_map<LONGLONG, unsigned char>::iterator i;
-	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); i++)
+	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); ++i)
 	{
 		if (((i->second >> 6) & 1) == 1)
 		{
@@ -52,12 +52,12 @@ void Rle::Save(std::wstring name, Calc& calc)
 	std::string strLine;
 	std::string strTmp;
 
-	for (long y = areaYmin; y <= areaYmax; y++)
+	for (long y = areaYmin; y <= areaYmax; ++y)
 	{
-		for (long x = areaXmin; x <= areaXmax; x++)
+		for (long x = areaXmin; x <= areaXmax; ++x)
 		{
 			point = { x,y };
-			if (calc.Contains(point, calc.LifePoint)) dupO++; else dupB++;
+			if (calc.Contains(point, calc.LifePoint)) ++dupO; else ++dupB;
 
 
 			if (dup$ > dup$old) dupB = dupB - dupBold;//если новая строка стираем последние пустые
@@ -167,7 +167,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 			if (s[0] == '0' || s[0] == '1' || s[0] == '2' || s[0] == '3' || s[0] == '4' || s[0] == '5' || s[0] == '6' || s[0] == '7' || s[0] == '8' || s[0] == '9' || s[0] == 'o' || s[0] == 'b' || s[0] == '$' || s[0] == '!' || s[0] == ' ' || s[0] == 'о') //пропускаем строки только с такими начальными символами
 			{
 				countTmp = -1;
-				for (long i = 0; i < s.size(); i++)
+				for (long i = 0; i < s.size(); ++i)
 				{
 					if (s[i] == '!') goto end_;
 					if (s[i] == 'o' || s[i] == 'b' || s[i] == '$' || s[i] == 'о') //если найден символ, считаем
@@ -181,32 +181,32 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 							{
 								point = {x,y};
 								calc.Insert(point, calc.LifePoint, false, grid);
-								x++;
+								++x;
 							}
 							else
 							{
-								for (long j = 0; j < repeat; j++)
+								for (long j = 0; j < repeat; ++j)
 								{
 									point = { x,y };
 									calc.Insert(point, calc.LifePoint, false, grid);
-									x++;
+									++x;
 								}
 							}
 						}
 						else if (s[i] == 'b')
 						{
-							if (repeat == 0) x++; else x = x + repeat;
+							if (repeat == 0) ++x; else x = x + repeat;
 						}
 						else if (s[i] == '$')
 						{
 							if (repeat == 0)
 							{
-								y++;
+								++y;
 								x = 0;
 							}
 							else
 							{
-								y = y + repeat;
+								y += repeat;
 								x = 0;
 							}
 						}
@@ -229,8 +229,8 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 	while (grid.scalePoint != scX)//подгоняем масштаб до степени двойки
 	{
 		if (scale == 1) scale = -2;
-		else if (scale <= -32) scale = scale * 2;
-		else scale--;
+		else if (scale <= -32) scale *= 2;
+		else --scale;
 
 		if (scale <= scX)
 		{
