@@ -36,7 +36,7 @@ void Rle::Save(std::wstring name, Calc& calc)
 	std::unordered_map<LONGLONG, unsigned char>::iterator i;
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); ++i)
 	{
-		if (((i->second >> 6) & 1) == 1)
+		if ((bool)((i->second >> 6) & 1))
 		{
 			ull.U = i->first;
 			if (areaXmin > ull.L[0])areaXmin = ull.L[0];//נאסקוע אנואכא 

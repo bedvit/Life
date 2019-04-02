@@ -38,7 +38,7 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, unsigned char> &Li
 	std::unordered_map<LONGLONG, unsigned char>::iterator i;
 	i = LifePoint.find(HashPoint(point));
 	if (i == LifePoint.end()) return false;
-	return (((i->second >> 6) & 1) == 1);
+	return ((bool)((i->second >> 6) & 1));
 }
 void Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char> &LifePoint, bool pointDelete, Grid& grid) //сОздаем для точки итератор
 {
@@ -47,7 +47,7 @@ void Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char> &Life
 	i = LifePoint.find(hashPoint); //для удаляемой точки всегда должен быть не конечный итератор
 	if (pointDelete) //если удаляем
 	{
-		if (i != LifePoint.end() && (((i->second >> 6) & 1) == 1)) InsertRun(i, pointDelete, grid); //удаляем если есть такая точка и она живая
+		if (i != LifePoint.end() && ((bool)((i->second >> 6) & 1))) InsertRun(i, pointDelete, grid); //удаляем если есть такая точка и она живая
 	}
 	else //если добавляем
 	{
@@ -58,7 +58,7 @@ void Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char> &Life
 		}
 		else //если уже есть живая
 		{
-			if (((i->second >> 6) & 1) == 0) InsertRun(i, pointDelete, grid); //создаем если не было живой//3й байт с начала, 6й с конца - (little-endian)
+			if (!(bool)((i->second >> 6) & 1)) InsertRun(i, pointDelete, grid); //создаем если не было живой//3й байт с начала, 6й с конца - (little-endian)
 		}
 	}
 }
@@ -80,8 +80,6 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char>::iterator i, bo
 			{
 				if (y == 1 && x == 1)//считаем саму себя
 				{ 
-					if (i != LifePoint.end()) // если такая точка есть (для удаляемой точки)
-					{
 						--Population;
 						i->second &= ~(1 << 6);//выключаем 7й бит
 						if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
@@ -94,25 +92,20 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char>::iterator i, bo
 							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
-						if (((i->second >> 5) & 1) == 0)LifePointRun[++LifePointRunSize - 1] = i;
+						if (!(bool)((i->second >> 5) & 1))LifePointRun[++LifePointRunSize - 1] = i;
 						i->second |= 1 << 5; //включаем 6 бит
-					}
 				}
 				else //считаем окружающие
 				{
-					hashPointTmp = HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 });
-					iTmp = LifePoint.find(hashPointTmp);
-					if (iTmp != LifePoint.end())
-					{
+					iTmp = LifePoint.find(HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 }));
 						--iTmp->second;
 						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 						{
 							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
 							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 						}
-						if (((iTmp->second >> 5) & 1) == 0)LifePointRun[++LifePointRunSize - 1] = iTmp;
+						if (!(bool)((iTmp->second >> 5) & 1))LifePointRun[++LifePointRunSize - 1] = iTmp;
 						iTmp->second |= 1 << 5; //включаем 6 бит
-					}
 				}
 			}
 		}
@@ -141,33 +134,15 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char>::iterator i, bo
 				}
 				else
 				{	//считаем окружающие
-					hashPointTmp = HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 });
-					iTmp = LifePoint.find(hashPointTmp);
-					if (iTmp == LifePoint.end()) //если нет такой точки и добавляем её
+					iTmp = LifePoint.try_emplace(HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 }), 144).first;
+					++iTmp->second;
+					if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
 					{
-						iTmp = LifePoint.emplace(hashPointTmp, 144).first;
-						++iTmp->second;
-						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
-						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
-							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
-						}
-						if (((iTmp->second >> 5) & 1) == 0)LifePointRun[++LifePointRunSize - 1] = iTmp;
-						iTmp->second |= 1 << 5;//включаем 6 бит
-
+						LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
+						LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
 					}
-					else //если есть такая точка
-					{
-						++iTmp->second; //добавляем 1 в счетчик точек окружения
-						if (LifePointRunSize >= LifePointRunSizeTmp)//добавляем в RUN массив
-						{
-							LifePointRunSizeTmp = LifePointRunSizeTmp + SIZE_ARRAY;
-							LifePointRun.resize(LifePointRunSizeTmp); //увеличиваем размер массива, если не хватает
-						}
-						if (((iTmp->second >> 5) & 1) == 0)LifePointRun[++LifePointRunSize - 1] = iTmp;
-						iTmp->second |= 1 << 5;////включаем 6 бит
-					}
-
+					if (!(bool)((iTmp->second >> 5) & 1))LifePointRun[++LifePointRunSize - 1] = iTmp;
+					iTmp->second |= 1 << 5;//включаем 6 бит
 				}
 			}
 		}
@@ -186,7 +161,7 @@ void Calc::RunLife(Grid& grid)
 	{
 		LifePointRun[j]->second &= 223;//выключаем 6й бит (&11111011) - отключаем обновление
 		unsigned char ss = LifePointRun[j]->second & 15; //(&11110000)
-		if (ss == 3 && (((LifePointRun[j]->second >> 6) & 1) == 0))//добавляем если 3 точки вокруг
+		if (ss == 3 && (!(bool)((LifePointRun[j]->second >> 6) & 1)))//добавляем если 3 точки вокруг
 		{
 			LifePointRun[j]->second |= 1 << 6; //включаем 7 бит (жизнь)
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
@@ -196,11 +171,11 @@ void Calc::RunLife(Grid& grid)
 			}
 			LifePointRunNew[++LifePointRunSizeTmp-1]= LifePointRun[j];
 		}
-		else if (ss < 1 && (((LifePointRun[j]->second >> 6) & 1) == 0))//удаляем пустые ячейки
+		else if (ss < 1 && (!(bool)((LifePointRun[j]->second >> 6) & 1)))//удаляем пустые ячейки
 		{
 			LifePoint.erase(LifePointRun[j]);
 		}
-		else if((ss > 3 || ss < 2) && (((LifePointRun[j]->second >> 6) & 1) == 1))//удаляем
+		else if((ss > 3 || ss < 2) && ((bool)((LifePointRun[j]->second >> 6) & 1)))//удаляем
 		{
 			LifePointRun[j]->second &= ~(1 << 6);//LifePointRun[j]->second.life = false;
 			if (LifePointRunSizeTmp >= LifePointRunSizeNew)//добавляем в RUNnew массив
@@ -215,11 +190,11 @@ void Calc::RunLife(Grid& grid)
 	LifePointRunSize = 0;
 	for (long j = 0; j < LifePointRunSizeTmp; ++j) //считаем новое поколение по RUN
 	{
-		if (((LifePointRunNew[j]->second >> 6) & 1) == 1)
+		if ((bool)((LifePointRunNew[j]->second >> 6) & 1))
 		{
 			InsertRun(LifePointRunNew[j], false, grid);
 		}
-		else if (((LifePointRunNew[j]->second >> 6) & 1) == 0)
+		else if (!(bool)((LifePointRunNew[j]->second >> 6) & 1))
 		{
 			InsertRun(LifePointRunNew[j], true, grid);
 		}
