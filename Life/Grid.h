@@ -13,14 +13,14 @@ public:
 	void Move(long x, long y); // Сдвигает грид на x пикселей вправо и y вверх
 	void AddScale(long x, long y); // Увеличить масштаб отталкиваясь от точки x, y
 	void DecScale(long x, long y); // Уменьшить масштаб отталкиваясь от точки x, y
-	void Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoint, long& AreaXmin, long& AreaYmin, long& AreaXmax, long& AreaYmax);
+	void Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>& LifePoint, long& AreaXmin, long& AreaYmin, long& AreaXmax, long& AreaYmax);
 	Point GetCell(Point point); // Получить координаты точки 
 	bool updateBuffer;
 	bool updateInfo;
 	bool zoom;
 	bool autoZoom;
 	bool areaLife;
-	void DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i);
+	void DrawPoint(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i);
 	unsigned char* lpBitmapBits;
 };
 

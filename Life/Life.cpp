@@ -42,8 +42,6 @@ long step;
 HWND hWnd;
 HWND hWndEdit1;
 HWND hWndEdit2;
-//HWND hWndEdit3;
-//HWND hWndEdit4;
 wchar_t* buf = new wchar_t[255];
 wchar_t *end;
 wchar_t szFileName[MAX_PATH] = L"";
@@ -218,8 +216,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
 				DestroyWindow(hWndEdit1);
 				DestroyWindow(hWndEdit2);
-				//DestroyWindow(hWndEdit3);
-				//DestroyWindow(hWndEdit4);
                 DestroyWindow(hWnd);
                 break;
 			case IDM_START:
@@ -328,7 +324,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_AUTOZOOM:
 				SetFocus(hWnd); //фокус на главную форму
 				grid.autoZoom= !grid.autoZoom;
-				//if (grid.autoZoom) SetWindowTextW(hWndEdit3, L"ВКЛ"); else  SetWindowTextW(hWndEdit3, L"ВЫКЛ");
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
@@ -345,7 +340,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetFocus(hWnd); //фокус на главную форму
 				grid.areaLife = !grid.areaLife;
 				grid.updateBuffer = true;
-				//if (grid.areaLife) SetWindowTextW(hWndEdit4, L"ВКЛ"); else  SetWindowTextW(hWndEdit4, L"ВЫКЛ");
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
@@ -554,7 +548,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TextOut(hMemDC, Xstart, Ystart, L"Таймер, сек.", 12);
 				Ystart += break1;
 				_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 5);
-				//_fcvt_s(buffer, _CVTBUFSIZE,search_time/1000, 5, &decimal, &sign); //для char
 				mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
 				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
 
@@ -580,7 +573,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					TextOut(hMemDC, Xstart, Ystart, L"ВЫКЛ", 4);
 				}
-				//MoveWindow(hWndEdit3, Xstart, Ystart, 100, 14, true);
 
 
 				Ystart += break2;//Ареал по живым
@@ -594,7 +586,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					TextOut(hMemDC, Xstart, Ystart, L"ВЫКЛ", 4);
 				}
-				//MoveWindow(hWndEdit4, Xstart, Ystart, 100, 14, true);
+
 
 				Ystart += break2;//ВВОД
 				TextOut(hMemDC, Xstart, Ystart, L"===ВВОД===", 10);
@@ -619,8 +611,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 			MoveWindow(hWndEdit1, -100, -100, 100, 14, true);//убираем с экрана
 			MoveWindow(hWndEdit2, -100, -100, 100, 14, true);
-			//MoveWindow(hWndEdit3, -100, -100, 100, 14, true);
-			//MoveWindow(hWndEdit4, -100, -100, 100, 14, true);
 			}
 
 			BitBlt(hdc, 0, 0, size.x, size.y, hMemDC, 0, 0, SRCCOPY);
@@ -635,6 +625,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_DESTROY: //подчищаем память
+		calc.DelLife();
 		delete[] buf;
 		DeleteObject(bitmap);
 		PostQuitMessage(0);
@@ -717,12 +708,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			mousePos.x = xPos;  // Запомним координаты мыши
 			mousePos.y = yPos;
-			//RECT rect = { 0 };
-			//GetClientRect(hWndEdit1, &rect);
-			//if (xPos < rect.left) 
-			//{
-				//SetFocus(hWnd); //фокус на главную форму
-			//}
 			if (!RunLife) //перерисовываем координаты мыши
 			{
 				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
@@ -774,42 +759,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		GenerationFix = calc.Generation;
 		break;
 
-
-	//case WM_CHAR:
-	//	switch (wParam)
-	//	{
-	//	case 0x1B:// Process an escape. 
-	//		//if (IDYES == MessageBox(hWnd, L"Are you sure you want to exit?", L"Quit Application",
-	//		//	MB_ICONQUESTION + MB_YESNO))
-	//		//{
-	//		//PostQuitMessage(0);
-	//		//}
-	//		//DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-	//		break;
-
-	//	case VK_RETURN:
-	//		DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-	//		SetFocus(hWnd); //фокус на главную форму
-	//		break;
-
-	//	}
-	//case WM_KEYDOWN:
-	//	switch (wParam)
-	//	{
-	//	case VK_F5:
-	//		DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-	//		break;
-
-	//	//case VK_RETURN:
-	//	//	DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-	//	//	SetFocus(hWnd); //фокус на главную форму
-	//	//	break;
-
-	//	}
-
-		break;
-
-
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -835,7 +784,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		if (LOWORD(wParam) == 555)
 		{
 			ShellExecute(NULL, L"open", L"http://www.cyberforum.ru/blogs/829006/blog5719.html", NULL, NULL, SW_SHOW);
-			//MessageBoxA(NULL, "Hello World!", "Test", MB_OK);
 		}
 		break;
     }

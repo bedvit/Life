@@ -5,7 +5,6 @@
 #include "Point.h"
 #include <algorithm>
 
-
 Rle::Rle()
 {
 }
@@ -33,10 +32,10 @@ void Rle::Save(std::wstring name, Calc& calc)
 	ULL ull;
 
 	//////////////////расчет ареала по живым для сохранения в файл
-	std::unordered_map<LONGLONG, unsigned char>::iterator i;
+	std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 	for (i = calc.LifePoint.begin(); i != calc.LifePoint.end(); ++i)
 	{
-		if (((i->second >> 6) & 1) == 1)
+		if (((i->second[SIZE_POINT-1] >> 6) & 1) == 1)
 		{
 			ull.U = i->first;
 			if (areaXmin > ull.L[0])areaXmin = ull.L[0];//расчет ареала 

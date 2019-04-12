@@ -91,7 +91,7 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 	position.y = y - (float)zy * scale;
 }
 
-void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
+void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
 {
 		/*Point size;*/
 	sizeBuffer.x = rect.right - rect.left + 1;
@@ -164,10 +164,10 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 		}
 
 		//выводим живые клетки
-		std::unordered_map<LONGLONG, unsigned char>::iterator i;
+		std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 		for (i = LifePoint.begin(); i != LifePoint.end(); ++i)
 		{
-			if (((i->second >> 6) & 1) == 1)//(i->second.life)
+			if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 1)//(i->second.life)
 			{
 				RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
 				ull.U = i->first;
@@ -231,7 +231,7 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char>& LifePoi
 	} 
 }
 
-void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i)
+void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i)
 {
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
@@ -261,7 +261,7 @@ void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char>::iterator i)
 	if (AreaXmax >= 0 && AreaYmax >= 0 && AreaXmin < sizeBuffer.x && AreaYmin < sizeBuffer.y)
 	{
 		indexP = (AreaYmin + 32)*(sizeBuffer.x + 32) + (AreaXmin + 32);
-		if (((i->second >> 6) & 1) == 1)	++PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
+		if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 1)	++PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
 		else --PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
 		
 		if (PointCount[indexP] == 1) //отрисовываем квадрат
