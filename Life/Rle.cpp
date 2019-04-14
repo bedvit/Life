@@ -179,7 +179,10 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 							if (repeat == 0)
 							{
 								point = {x,y};
-								calc.Insert(point, calc.LifePoint, false, grid);
+								if (calc.Insert(point, calc.LifePoint, false, grid)) //Overflow Life
+								{
+									goto end_;
+								}
 								++x;
 							}
 							else
@@ -187,7 +190,10 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 								for (long j = 0; j < repeat; ++j)
 								{
 									point = { x,y };
-									calc.Insert(point, calc.LifePoint, false, grid);
+									if (calc.Insert(point, calc.LifePoint, false, grid)) //Overflow Life
+									{
+										goto end_;
+									}
 									++x;
 								}
 							}

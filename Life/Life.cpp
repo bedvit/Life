@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Life.h"
 #include "rle.h"
+#include "Msg.h"
 #include <thread>
 #include <Windows.h>
 #include "commdlg.h"
@@ -19,6 +20,7 @@ Grid grid;
 Calc calc;
 Rle rle;
 Point point;
+Msg msg;
 
 Point size; //Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
 Point mousePos; // Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
@@ -162,7 +164,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
    GetWindowText(hWnd, buffer, 255); //заголовок
    nameWin = std::wstring(buffer);
-   
+   msg.SetHWND(hWnd);//указываем окно для вывода сообщений
+
    //создаем свое меню
    RECT rect = { 0 };
   // GetWindowRect(hWnd, &rect); //в координатах экрана
@@ -266,7 +269,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					RECT rect;
 					GetClientRect(hWnd, &rect);// Узнаем размеры клиентского окна.
-					KillTimer(hWnd, 123);
 					calc.DelLife();
 					search_time = 0;
 					GenerationFix = 0;
@@ -353,16 +355,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_TIMER:
 		{
-			
-			calc.RunLifeStep(step, grid); //запуск расчета поколений
-			end_time = clock(); // конечное время
-			search_time = end_time - start_time; // искомое время
-			search_timeNew = end_time - start_timeNew;
-			generation_time = end_time - pre_time; //
-			pre_time = end_time; // конечное время
+			if (calc.LifePointSize>= SIZE_LIFEPOINT)
+			{
+				RunLife = false;
+				KillTimer(hWnd, 123);
+				msg.MsgOverflow();
+			}
+			else
+			{
+				calc.RunLifeStep(step, grid); //запуск расчета поколений
+				end_time = clock(); // конечное время
+				search_time = end_time - start_time; // искомое время
+				search_timeNew = end_time - start_timeNew;
+				generation_time = end_time - pre_time; //
+				pre_time = end_time; // конечное время
 
-			InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно еcли готово новое поколение жизни.		
-
+				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно еcли готово новое поколение жизни.		
+			}
 		}
 		break;
 	case WM_PAINT: // Событие прорисовки. Вызывается системой когда окно нужно перерисовать. Например если мы его растянули и т.д. Мы сами можешь попросить систему вызвать это событие.(см. ниже) 
@@ -696,7 +705,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					{
 						mousePosPoint.x = calcPoint.x;
 						mousePosPoint.y = calcPoint.y;
-						calc.Insert(calcPoint, calc.LifePoint, pointDelete, grid);
+						if (calc.LifePointSize < SIZE_LIFEPOINT) calc.Insert(calcPoint, calc.LifePoint, pointDelete, grid);
 					}
 				}
 				mousePos.x = xPos;

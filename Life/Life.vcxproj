@@ -187,6 +187,7 @@
     <ClInclude Include="Calc.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Life.h" />
+    <ClInclude Include="Msg.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Rle.h" />
@@ -197,6 +198,7 @@
     <ClCompile Include="Calc.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Life.cpp" />
+    <ClCompile Include="Msg.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Rle.cpp" />
     <ClCompile Include="stdafx.cpp">

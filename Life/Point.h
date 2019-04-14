@@ -1,5 +1,7 @@
 #pragma once
 
+#define SIZE_LIFEPOINT 28000000
+
 #ifdef _WIN64
 #define SIZE_POINT 9
 #elif _WIN32

@@ -6,8 +6,11 @@
 #define SIZE_ARRAY 1000000
 static long generation = 0;
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run;
-static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> RunNew;
+static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run1; //массив с живими
+static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run2; //массив с гибнущими
 static long RunSize;
+//static long RunSize1;
+//static long RunSize2;
 
 Calc::Calc()
 {
@@ -15,7 +18,8 @@ Calc::Calc()
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;
-	LifePoint.reserve(33000000);
+	LifePoint.reserve(SIZE_LIFEPOINT);//33
+	LifePointSize = 0;
 	//LifePoint.max_load_factor(0.5);
 }
 
@@ -28,7 +32,7 @@ union ULL
 union IC
 {
 	std::unordered_map<LONGLONG, unsigned char[SIZE_POINT]>::iterator* I;
-	char C[SIZE_POINT];
+	unsigned char C[SIZE_POINT];
 };
 
 LONGLONG Calc::HashPoint(Point point)
@@ -47,8 +51,15 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, unsigned char [SIZ
 	return (((i->second[SIZE_POINT - 1] >> 6) & 1) == 1);
 }
 
-void Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint, bool pointDelete, Grid& grid) //сОздаем для точки итератор
+int Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint, bool pointDelete, Grid& grid) //сОздаем для точки итератор
 {
+	Msg msg;
+	if (LifePointSize >= SIZE_LIFEPOINT) //Overflow Life
+	{
+		msg.MsgOverflow();
+		return 1;
+	}
+	
 	LONGLONG hashPoint = HashPoint({ point.x,point.y });
 	std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 	i = LifePoint.find(hashPoint); //для удаляемой точки всегда должен быть не конечный итератор
@@ -75,22 +86,24 @@ void Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_
 				std::forward_as_tuple(hashPoint),
 				std::forward_as_tuple()
 			).first;
+			++LifePointSize;
 			i->second[SIZE_POINT - 1] = 144;
-			InsertRun(i, pointDelete, grid);
-			
+			if(InsertRun(i, pointDelete, grid)) return 1;
 		}
 		else //если уже есть 
 		{
 			if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 0) //если не живая - обрабатываем
 			{
-				InsertRun(i, pointDelete, grid);
+				if (InsertRun(i, pointDelete, grid)) return 1;
 			}
 		}
 	}
+	return 0;
 }
 
-void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i, bool pointDelete, Grid& grid) //расчет по итераторам
+int Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i, bool pointDelete, Grid& grid) //расчет по итераторам
 {
+	Msg msg;
 	long RunSizeTmp = Run.size(); //размер массива RUN
 	int n[3] = { -1, 0, 1 };
 	std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator iTmp;
@@ -102,12 +115,6 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 	if (pointDelete) //если удаляем точку
 	{
 		--Population;
-		i->second[SIZE_POINT-1]  &= ~(1 << 6);//выключаем 7й бит
-		if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
-		{
-			grid.DrawPoint(i);
-		}
-						
 		if (RunSize >= RunSizeTmp)//добавляем в RUN массив
 		{
 			RunSizeTmp = RunSizeTmp + SIZE_ARRAY;
@@ -130,11 +137,29 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 
 		}
 		delete[] ic.I; //удаляем облако 
+		i->second[SIZE_POINT - 1] &= ~(1 << 6);//выключаем 7й бит
+		if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
+		{
+			grid.DrawPoint(i);
+		}
 	}
 	else //если добавляем
 	{
 		ic.I = new std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator[8];//добавляем облако
 		memcpy(i->second,ic.C,  SIZE_POINT);
+		++Population;
+		i->second[SIZE_POINT-1]  |= 1 << 6; //включаем 7й бит
+		if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
+		{
+			grid.DrawPoint(i);
+		}
+		if (RunSize >= RunSizeTmp)//добавляем в RUN массив
+		{
+			RunSizeTmp = RunSizeTmp + SIZE_ARRAY;
+			Run.resize(RunSizeTmp); //увеличиваем размер массива, если не хватает
+		}
+		if (((i->second[SIZE_POINT - 1] >> 5) & 1) == 0)Run[++RunSize - 1] = i;
+		i->second[SIZE_POINT - 1] |= 1 << 5;//включаем 6 бит	
 
 		for (int y = 0; y < 3; ++y) // проходим по 8 соседним точкам
 		{
@@ -142,36 +167,31 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 			{
 				if (y == 1 && x == 1)//считаем саму себя
 				{
-					++Population;
-					i->second[SIZE_POINT-1]  |= 1 << 6; //включаем 7й бит
-					if (!grid.updateBuffer) //рисуем точку если выключено обновление буфера
+				}
+				else
+				{	//считаем окружающие
+					if (LifePointSize >= SIZE_LIFEPOINT) //Overflow Life
 					{
-						grid.DrawPoint(i);
+						msg.MsgOverflow();
+						return 1;
 					}
+					iTmp = LifePoint.try_emplace(LifePoint.end(), HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 }));//!!
+					if (iTmp->second[SIZE_POINT - 1] == 0)
+					{
+						iTmp->second[SIZE_POINT - 1] = 144;
+						++LifePointSize;
+					}
+					++iTmp->second[SIZE_POINT-1] ;
 					if (RunSize >= RunSizeTmp)//добавляем в RUN массив
 					{
 						RunSizeTmp = RunSizeTmp + SIZE_ARRAY;
 						Run.resize(RunSizeTmp); //увеличиваем размер массива, если не хватает
 					}
-					if (((i->second[SIZE_POINT-1]  >> 5) & 1) == 0)Run[++RunSize - 1] = i;
-					i->second[SIZE_POINT-1]  |= 1 << 5;//включаем 6 бит				
-				}
-				else
-				{	//считаем окружающие
-					iTmp = LifePoint.try_emplace(LifePoint.end(), HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 }));//!!
-					if (iTmp->second[SIZE_POINT - 1] == 0) iTmp->second[SIZE_POINT - 1] = 144;
-						++iTmp->second[SIZE_POINT-1] ;
-						if (RunSize >= RunSizeTmp)//добавляем в RUN массив
-						{
-							RunSizeTmp = RunSizeTmp + SIZE_ARRAY;
-							Run.resize(RunSizeTmp); //увеличиваем размер массива, если не хватает
-						}
-						if (((iTmp->second[SIZE_POINT-1]  >> 5) & 1) == 0)Run[++RunSize - 1] = iTmp;
-						iTmp->second[SIZE_POINT-1]  |= 1 << 5;//включаем 6 бит
-						////////////заполняем итераторами облако/////////////
-						ic.I[yx] = iTmp;
-						++yx;
-
+					if (((iTmp->second[SIZE_POINT-1]  >> 5) & 1) == 0)Run[++RunSize - 1] = iTmp;//включаем обновление
+					iTmp->second[SIZE_POINT-1]  |= 1 << 5;//включаем 6 бит
+					////////////заполняем итераторами облако/////////////
+					ic.I[yx] = iTmp;
+					++yx;
 				}
 			}
 		}
@@ -180,55 +200,57 @@ void Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 		if (AreaXmax < ull.L[0])AreaXmax = ull.L[0];
 		if (AreaYmax < ull.L[1])AreaYmax = ull.L[1];
 	}
+	return 0;
 }
 
-void Calc::RunLife(Grid& grid)
+int Calc::RunLife(Grid& grid)
 {
-	long RunSizeNew = RunNew.size(); //размер массива RUNtmp
-	long RunSizeTmp = 0;
+	long RunSize1 = 0; //размер массива RUN1
+	long RunSize2 = 0; //размер массива RUN2
+	long RunSizeTmp1 = Run1.size(); //размер массива RUNtmp1
+	long RunSizeTmp2 = Run2.size(); //размер массива RUNtmp2
 	for (long j = 0; j < RunSize; ++j) //считаем новое поколение по RUN
 	{
 		Run[j]->second[SIZE_POINT - 1] &= 223;//выключаем 6й бит (&11111011) - отключаем обновление
 		unsigned char ss = Run[j]->second[SIZE_POINT - 1] & 15; //(&11110000)
 		if (ss == 3 && (((Run[j]->second[SIZE_POINT - 1] >> 6) & 1) == 0))//добавляем если 3 точки вокруг
 		{
-			Run[j]->second[SIZE_POINT - 1] |= 1 << 6; //включаем 7 бит (жизнь)
-			if (RunSizeTmp >= RunSizeNew)//добавляем в RUNnew массив
+			if (RunSize1 >= RunSizeTmp1)//добавляем в RUN массив
 			{
-				RunSizeNew = RunSizeNew + SIZE_ARRAY;
-				RunNew.resize(RunSizeNew); //увеличиваем размер массива, если не хватает
+				RunSizeTmp1 = RunSizeTmp1 + SIZE_ARRAY;
+				Run1.resize(RunSizeTmp1); //увеличиваем размер массива, если не хватает
 			}
-			RunNew[++RunSizeTmp-1]= Run[j];
+			Run1[++RunSize1-1]= Run[j];
 		}
 		else if (ss < 1 && (((Run[j]-> second[SIZE_POINT - 1] >> 6) & 1) == 0))//удаляем пустые ячейки
 		{
 			LifePoint.erase(Run[j]);
+			--LifePointSize;
 		}
 		else if((ss > 3 || ss < 2) && (((Run[j]->second[SIZE_POINT - 1] >> 6) & 1) == 1))//удаляем
 		{
-			Run[j]->second[SIZE_POINT - 1] &= ~(1 << 6);//Run[j]->second.life = false;
-			if (RunSizeTmp >= RunSizeNew)//добавляем в RUNnew массив
+			if (RunSize2 >= RunSizeTmp2)//добавляем в RUN массив
 			{
-				RunSizeNew = RunSizeNew + SIZE_ARRAY;
-				RunNew.resize(RunSizeNew); //увеличиваем размер массива, если не хватает
+				RunSizeTmp2 = RunSizeTmp2 + SIZE_ARRAY;
+				Run2.resize(RunSizeTmp2); //увеличиваем размер массива, если не хватает
 			}
-			RunNew[++RunSizeTmp - 1] = Run[j];
+			Run2[++RunSize2 - 1] = Run[j];
 		}
 	}
 
-	RunSize = 0;
-	for (long j = 0; j < RunSizeTmp; ++j) //считаем новое поколение по RUN
+	RunSize = 0; //обнудяем массив RUN - меняющиеся ячейки
+	for (long j = 0; j < RunSize1; ++j) //считаем новое поколение по RUN
 	{
-		if (((RunNew[j]->second[SIZE_POINT - 1] >> 6) & 1) == 1)
-		{
-			InsertRun(RunNew[j], false, grid);
-		}
-		else if (((RunNew[j]->second[SIZE_POINT - 1] >> 6) & 1) == 0)
-		{
-			InsertRun(RunNew[j], true, grid);
-		}
+		if (InsertRun(Run1[j], false, grid)) return 1;
 	}
+
+	for (long j = 0; j < RunSize2; ++j) //удаляем ненужные
+	{
+		if (InsertRun(Run2[j], true, grid)) return 1;
+	}
+
 	++Generation;
+	return 0;
 }
 
 void Calc::RunLifeStep(long step, Grid& grid)
@@ -236,7 +258,7 @@ void Calc::RunLifeStep(long step, Grid& grid)
 	long stepTmp = 0;
 	while(step> stepTmp)
 	{
-		RunLife(grid);
+		if (RunLife(grid)) return ;
 		++stepTmp;
 	}
 }
@@ -245,9 +267,11 @@ void Calc::DelLife()
 {
 	//удаляем облака
 	IC ic;
+	long x=0;
 	std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 	for (i = LifePoint.begin(); i != LifePoint.end(); ++i)
 	{
+		x++;
 		if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 1)//если живой
 		{
 			memcpy(ic.C, i->second, SIZE_POINT);
@@ -259,10 +283,13 @@ void Calc::DelLife()
 	Generation = 0;
 	Population = 0;
 	RunSize = 0;
+	//RunSize1 = 0;
+	//RunSize2 = 0;
 	AreaXmin = LONG_MAX;
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;
+	LifePointSize=0;
 }
 
 Calc::~Calc()
