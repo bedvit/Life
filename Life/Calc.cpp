@@ -9,8 +9,6 @@ static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::ite
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run1; //массив с живими
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run2; //массив с гибнущими
 static long RunSize;
-//static long RunSize1;
-//static long RunSize2;
 
 Calc::Calc()
 {
@@ -18,7 +16,7 @@ Calc::Calc()
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
 	AreaYmax = LONG_MIN;
-	LifePoint.reserve(SIZE_LIFEPOINT);//33
+	LifePoint.reserve(SIZE_LIFEPOINT);
 	LifePointSize = 0;
 	//LifePoint.max_load_factor(0.5);
 }
@@ -238,13 +236,13 @@ int Calc::RunLife(Grid& grid)
 		}
 	}
 
-	RunSize = 0; //обнуд€ем массив RUN - мен€ющиес€ €чейки
-	for (long j = 0; j < RunSize1; ++j) //считаем новое поколение по RUN
+	RunSize = 0; //обнул€ем массив RUN - мен€ющиес€ €чейки
+	for (long j = 0; j < RunSize1; ++j) //живые
 	{
 		if (InsertRun(Run1[j], false, grid)) return 1;
 	}
 
-	for (long j = 0; j < RunSize2; ++j) //удал€ем ненужные
+	for (long j = 0; j < RunSize2; ++j) //гибнующие
 	{
 		if (InsertRun(Run2[j], true, grid)) return 1;
 	}
@@ -283,8 +281,6 @@ void Calc::DelLife()
 	Generation = 0;
 	Population = 0;
 	RunSize = 0;
-	//RunSize1 = 0;
-	//RunSize2 = 0;
 	AreaXmin = LONG_MAX;
 	AreaYmin = LONG_MAX;
 	AreaXmax = LONG_MIN;
