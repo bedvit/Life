@@ -54,7 +54,7 @@ int Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_P
 	Msg msg;
 	if (LifePointSize >= SIZE_LIFEPOINT) //Overflow Life
 	{
-		msg.MsgOverflow();
+		msg.ErrOverflow();
 		return 1;
 	}
 	
@@ -170,7 +170,7 @@ int Calc::InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::it
 				{	//считаем окружающие
 					if (LifePointSize >= SIZE_LIFEPOINT) //Overflow Life
 					{
-						msg.MsgOverflow();
+						msg.ErrOverflow();
 						return 1;
 					}
 					iTmp = LifePoint.try_emplace(LifePoint.end(), HashPoint({ ull.L[0] + x - 1, ull.L[1] + y - 1 }));//!!

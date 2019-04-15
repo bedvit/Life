@@ -12,9 +12,9 @@ void Msg::SetHWND(HWND hWnd)
 	shWnd = hWnd;
 }
 
-void Msg::MsgOverflow()
+void Msg::ErrOverflow()
 {
-		MessageBox(shWnd, L"Overflow Life\nДостигнут предел количества живых клеток.", L"Life", MB_ICONERROR + MB_OK);
+		MessageBox(shWnd, L"Life Overflow\nДостигнут предел количества живых клеток!", L"Life", MB_ICONERROR + MB_OK);
 }
 Msg::~Msg()
 {

@@ -359,7 +359,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				RunLife = false;
 				KillTimer(hWnd, 123);
-				msg.MsgOverflow();
+				msg.ErrOverflow();
 			}
 			else
 			{
