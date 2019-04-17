@@ -44,14 +44,14 @@ long step;
 HWND hWnd;
 HWND hWndEdit1;
 HWND hWndEdit2;
-wchar_t* buf = new wchar_t[255];
+wchar_t* buf = new wchar_t[256];
 wchar_t *end;
 wchar_t szFileName[MAX_PATH] = L"";
 OPENFILENAME ofn;
 wchar_t fileOut[MAX_PATH] = L"Life.rle";
 wchar_t buffer[MAX_PATH]; //результат для инфо панели
-wchar_t bufferTmp[255]; //результат для инфо панели
-char vOutChar[255];
+wchar_t bufferTmp[256]; //результат для инфо панели
+char vOutChar[256];
 static std::wstring nameWin;
 static std::wstring nameWinNew;
 bool RunLife=false;
@@ -162,7 +162,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    if (!hWnd) return FALSE;
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
-   GetWindowText(hWnd, buffer, 255); //заголовок
+   GetWindowText(hWnd, buffer, 256); //заголовок
    nameWin = std::wstring(buffer);
    msg.SetHWND(hWnd);//указываем окно для вывода сообщений
 
@@ -224,12 +224,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case IDM_START:
 				SetFocus(hWnd); //фокус на главную форму
 				RunLife = true;
-				GetWindowTextW(hWndEdit1, buf, 255); //забираем данные о замедлении из пользовательского меню
+				GetWindowTextW(hWndEdit1, buf, 256); //забираем данные о замедлении из пользовательского меню
 				SetTimer(hWnd, 123, wcstol(buf, &end, 10), NULL);
 				start_timeNew = clock();
 				start_time = start_timeNew - search_time;
 				GenerationFix = calc.Generation;
-				GetWindowTextW(hWndEdit2, buf, 255); //забираем данные о количестве поколений на один шаг
+				GetWindowTextW(hWndEdit2, buf, 256); //забираем данные о количестве поколений на один шаг
 				step = wcstol(buf, &end, 10);
 				break;
 			case IDM_STOP:
@@ -477,11 +477,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Ystart += break1;
 				if (grid.scalePoint < 1)
 				{
-					_itow_s(-grid.scalePoint, buffer, 255, 10);
+					_itow_s(-grid.scalePoint, buffer, 256, 10);
 				}
 				else
 				{
-					_itow_s(grid.scalePoint, buffer, 255, 10);
+					_itow_s(grid.scalePoint, buffer, 256, 10);
 				}
 				int iEnd = wcslen(buffer) + 1; //колво символов с '\0'
 				if (grid.scalePoint < 1)
@@ -503,7 +503,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						bufferTmp[i] = buffer[i - 2];
 					}
 				}
-				TextOut(hMemDC, Xstart, Ystart, bufferTmp, wcsnlen(bufferTmp,255));
+				TextOut(hMemDC, Xstart, Ystart, bufferTmp, wcsnlen(bufferTmp,256));
 
 
 				Ystart += break2; //Координаты
@@ -511,54 +511,54 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"X:", 2);
 				Point calcPoint = grid.GetCell(mousePos);
-				_itow_s(calcPoint.x, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calcPoint.x, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Y:", 2);
-				_itow_s(calcPoint.y, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calcPoint.y, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 256));
 
 
 				Ystart += break2;//Ареал, min - max
 				TextOut(hMemDC, Xstart, Ystart, L"Ареал", 5);
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Xmin:", 5);
-				_i64tow_s(calc.AreaXmin, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				_i64tow_s(calc.AreaXmin, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Ymin:", 5);
-				_itow_s(calc.AreaYmin, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calc.AreaYmin, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Xmax:", 5);
-				_itow_s(calc.AreaXmax, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calc.AreaXmax, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Ymax:", 5);
-				_itow_s(calc.AreaYmax, buffer, 255, 10);
-				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calc.AreaYmax, buffer, 256, 10);
+				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 256));
 
 
 				Ystart += break2;//Население
 				TextOut(hMemDC, Xstart, Ystart, L"Население", 9);
 				Ystart += break1;
-				_itow_s(calc.Population, buffer, 255, 10);
-				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calc.Population, buffer, 256, 10);
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 256));
 
 
 				Ystart += break2;//Поколение
 				TextOut(hMemDC, Xstart, Ystart, L"Поколение", 9);
 				Ystart += break1;
-				_itow_s(calc.Generation, buffer, 255, 10);
-				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+				_itow_s(calc.Generation, buffer, 256, 10);
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 256));
 
 
 				Ystart += break2;//Таймер, сек.
 				TextOut(hMemDC, Xstart, Ystart, L"Таймер, сек.", 12);
 				Ystart += break1;
-				_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 5);
+				_gcvt_s(vOutChar, sizeof(vOutChar), ((double)search_time / 1000), 12);
 				mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
-				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 256));
 
 
 				Ystart += break2;//Поколений/сек.
@@ -566,9 +566,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Ystart += break1;
 				double out = 0.0;
 				if (search_timeNew != 0) out = ((double)(calc.Generation - GenerationFix) * 1000 / search_timeNew);// накопительным итогом на каждый запуск
-				_gcvt_s(vOutChar, sizeof(vOutChar), out, 5);
+				_gcvt_s(vOutChar, sizeof(vOutChar), out, 12);
 				mbstowcs_s(NULL, buffer, sizeof(buffer) / 2, vOutChar, sizeof(vOutChar));
-				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 255));
+				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 256));
 		
 
 				Ystart += break2;//Автомасштаб
