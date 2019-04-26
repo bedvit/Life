@@ -38,8 +38,8 @@ unsigned int pre_time; //
 unsigned int generation_time; //
 unsigned int start_timeNew;
 unsigned int search_timeNew;
-unsigned int GenerationFix;
-long step;
+ULONGLONG GenerationFix;
+ULONGLONG step;
 
 HWND hWnd;
 HWND hWndEdit1;
@@ -172,10 +172,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	GetClientRect(hWnd, &rect); //в координатах пользовательского окна
 	hWndEdit1 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"0000", WS_CHILD | WS_VISIBLE| ES_NUMBER, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
 	hWndEdit2 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"1", WS_CHILD | WS_VISIBLE| ES_NUMBER| ES_WANTRETURN, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	//hWndEdit3 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-	//hWndEdit4 = CreateWindowEx(WS_EX_LEFT, L"Edit", L"ВЫКЛ", WS_CHILD | WS_VISIBLE, rect.right - 100, 230, 100, 14, hWnd, (HMENU)NULL, hInstance, NULL);
-
+	
 	return TRUE;
+}
+
+BOOL Exit()
+{
+	if (MessageBox(GetActiveWindow(),L"Exit the program?\nЗакрыть программу?",L"Life", MB_YESNO | MB_ICONQUESTION) == IDYES)
+	{
+		return TRUE;// Выход.
+	}
+	return FALSE;   // Отмена.
 }
 
 //
@@ -217,9 +224,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
-				DestroyWindow(hWndEdit1);
-				DestroyWindow(hWndEdit2);
-                DestroyWindow(hWnd);
+				if (Exit())
+				{
+					DestroyWindow(hWndEdit1);
+					DestroyWindow(hWndEdit2);
+					DestroyWindow(hWnd);
+				}
                 break;
 			case IDM_START:
 				SetFocus(hWnd); //фокус на главную форму
@@ -230,7 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				start_time = start_timeNew - search_time;
 				GenerationFix = calc.Generation;
 				GetWindowTextW(hWndEdit2, buf, 256); //забираем данные о количестве поколений на один шаг
-				step = wcstol(buf, &end, 10);
+				step = wcstoll(buf, &end, 10); // значения до 2^64
 				break;
 			case IDM_STOP:
 				SetFocus(hWnd); //фокус на главную форму
@@ -523,7 +533,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TextOut(hMemDC, Xstart, Ystart, L"Ареал", 5);
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Xmin:", 5);
-				_i64tow_s(calc.AreaXmin, buffer, 256, 10);
+				_itow_s(calc.AreaXmin, buffer, 256, 10);
 				TextOut(hMemDC, Xstart+33, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"Ymin:", 5);
@@ -549,7 +559,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Ystart += break2;//Поколение
 				TextOut(hMemDC, Xstart, Ystart, L"Поколение", 9);
 				Ystart += break1;
-				_itow_s(calc.Generation, buffer, 256, 10);
+				_i64tow_s(calc.Generation, buffer, 256, 10);
 				TextOut(hMemDC, Xstart, Ystart, buffer, wcsnlen(buffer, 256));
 
 
@@ -633,13 +643,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-    case WM_DESTROY: //подчищаем память
-		calc.DelLife();
-		delete[] buf;
-		DeleteObject(bitmap);
-		PostQuitMessage(0);
-        break;
-
 	case WM_LBUTTONDOWN: // $ Левая кнопка нажата
 		SetFocus(hWnd); //фокус на главную форму
 		if (grid.scalePoint >= 1) // не рисуем при масштабе меньше 1 
@@ -697,8 +700,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				for (long i = 0; i < ColPosTmp; i++)
 				{
-					mousePos.x = start.x + (float)xPosTmp / ColPosTmp * (i + 1);
-					mousePos.y = start.y + (float)yPosTmp / ColPosTmp * (i + 1);
+					mousePos.x = start.x + (double)xPosTmp / ColPosTmp * (i + 1);
+					mousePos.y = start.y + (double)yPosTmp / ColPosTmp * (i + 1);
 
 					Point calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
 					if (mousePosPoint.x != calcPoint.x || mousePosPoint.y != calcPoint.y)
@@ -766,6 +769,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 		GenerationFix = calc.Generation;
+		break;
+
+	case WM_CLOSE:
+		if (Exit())
+		{
+			DestroyWindow(hWndEdit1);
+			DestroyWindow(hWndEdit2);
+			DestroyWindow(hWnd);
+		}
+		break;
+
+	case WM_DESTROY: //подчищаем память
+		calc.DelLife();
+		delete[] buf;
+		DeleteObject(bitmap);
+		PostQuitMessage(0);
 		break;
 
 	default:

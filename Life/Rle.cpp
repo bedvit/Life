@@ -55,13 +55,26 @@ void Rle::Save(std::wstring name, Calc& calc)
 	{
 		for (long x = areaXmin; x <= areaXmax; ++x)
 		{
-			point = { x,y };
-			if (calc.Contains(point, calc.LifePoint)) ++dupO; else ++dupB;
+			if (dup$ > 0 && dupO > 0 && dupO == dupOold)
+			{
+				if (dupO == 1) strTmp = "o"; else	strTmp = std::to_string(dupO) + "o";
+				dupO = 0;
 
+				if (strLine.length() + strTmp.length() > 70) //если длина строки превышает 70 символов
+				{
+					strOut = strOut + strLine + "\n";
+					strLine = strTmp;
+				}
+				else
+				{
+					strLine = strLine + strTmp;
+				}
+			}
 
+			if (calc.Contains({ x,y }, calc.LifePoint)) ++dupO; else ++dupB;
 			if (dup$ > dup$old) dupB = dupB - dupBold;//если новая строка стираем последние пустые
 
-			if (dup$ == dup$old && dup$ > 0 && dupO > 0)
+			if (dup$ > 0 && dupO > 0)
 			{
 				if (dup$ == 1) strTmp = "$"; else	strTmp = std::to_string(dup$) + "$";
 				dup$ = 0;
@@ -93,7 +106,7 @@ void Rle::Save(std::wstring name, Calc& calc)
 				}
 			}
 
-			if (dupO == dupOold && dupO > 0) //считаем количество заполненных/пустых/новых строк
+			if (dupO == dupOold && dupO > 0 && dupB > 0) //считаем количество заполненных/пустых/новых строк
 			{
 				if (dupO == 1) strTmp = "o"; else	strTmp = std::to_string(dupO) + "o";
 				dupO = 0;

@@ -4,7 +4,6 @@
 #include <utility>
 
 #define SIZE_ARRAY 1000000
-static long generation = 0;
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run;
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run1; //массив с живими
 static std::vector<std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator> Run2; //массив с гибнущими
@@ -251,9 +250,9 @@ int Calc::RunLife(Grid& grid)
 	return 0;
 }
 
-void Calc::RunLifeStep(long step, Grid& grid)
+void Calc::RunLifeStep(ULONGLONG step, Grid& grid)
 {
-	long stepTmp = 0;
+	ULONGLONG stepTmp = 0;
 	while(step> stepTmp)
 	{
 		if (RunLife(grid)) return ;

@@ -59,16 +59,16 @@ void Grid::AddScale(long x, long y) // Увеличить масштаб отталкиваясь от точки x
 
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	float zx = ((float)(x - position.x)) / scale; // Координаты мыши в гриде
-	float zy = ((float)(y - position.y)) / scale;
+	double zx = ((double)(x - position.x)) / scale; // Координаты мыши в гриде
+	double zy = ((double)(y - position.y)) / scale;
 
 	if (scalePoint == -2) scalePoint = 1;
 	else if (scalePoint < -32) scalePoint = scalePoint/2; 
 	else ++scalePoint;
 
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	position.x = x - (float)zx * scale; // Новые координаты центра грида, чтобы под курсором ячейка не двигалась во время масштабирования
-	position.y = y - (float)zy * scale;
+	position.x = x - (double)zx * scale; // Новые координаты центра грида, чтобы под курсором ячейка не двигалась во время масштабирования
+	position.y = y - (double)zy * scale;
 
 }
 
@@ -79,16 +79,16 @@ void Grid::DecScale(long x, long y) //уменьшить масштаб
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 
-	float zx = ((float)(x - position.x)) / scale; // Координаты мыши в гриде
-	float zy = ((float)(y - position.y)) / scale;
+	double zx = ((double)(x - position.x)) / scale; // Координаты мыши в гриде
+	double zy = ((double)(y - position.y)) / scale;
 
 	if (scalePoint == 1) scalePoint = -2;
 	else if (scalePoint <= -32) scalePoint = scalePoint * 2;
 	else --scalePoint;
 
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	position.x = x - (float)zx * scale; // Новые координаты центра грида 
-	position.y = y - (float)zy * scale;
+	position.x = x - (double)zx * scale; // Новые координаты центра грида 
+	position.y = y - (double)zy * scale;
 }
 
 void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>& LifePoint, long& AreaXmin,long& AreaYmin,long& AreaXmax,long& AreaYmax)
@@ -119,8 +119,8 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POI
 		// Выводим сетку
 		if (scalePoint >= 3)//рисуем сетку при 3х и более пикселей на клетку  
 		{
-			long startFade = 16;
-			long grayScale = 222;
+			unsigned char startFade = 16;
+			unsigned char grayScale = 222;
 
 			if (scale >= 3 && scale <= startFade) //делаем постепенный переход сетки
 			{

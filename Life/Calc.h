@@ -16,9 +16,9 @@ public:
 	int InsertRun(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i, bool pointDelete, Grid& grid);
 	bool Contains(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint);
 	int RunLife(Grid& grid);
-	void RunLifeStep(long step, Grid& grid);
+	void RunLifeStep(ULONGLONG step, Grid& grid);
 	void DelLife();
-	long Generation;
+	ULONGLONG Generation;
 	long Population;
 	long AreaXmin;
 	long AreaYmin;
