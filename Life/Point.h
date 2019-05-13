@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #ifdef _WIN64
 #define SIZE_POINT 9
 #define SIZE_LIFEPOINT 33000000 //MAX количество точек в мапе с учетом облака
@@ -16,8 +14,8 @@ public:
 	Point();
 	~Point();
 
-	Point(long x, long y);
-	long x;
-	long y;
+	Point(LONGLONG x, LONGLONG y);
+	LONGLONG x;
+	LONGLONG y;
 };
 

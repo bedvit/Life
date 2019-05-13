@@ -32,7 +32,7 @@ union IC
 	unsigned char C[SIZE_POINT];
 };
 
-LONGLONG Calc::HashPoint(Point point)
+LONGLONG Calc::HashPoint(POINT point)
 {
 	ULL ull;
 	ull.L[0] = point.x;
@@ -40,7 +40,7 @@ LONGLONG Calc::HashPoint(Point point)
 	return ull.U;
 }
 
-bool Calc::Contains(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint) //аналог std::unordered_map::contains (C++20) //только живые
+bool Calc::Contains(POINT point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint) //аналог std::unordered_map::contains (C++20) //только живые
 {
 	std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 	i = LifePoint.find(HashPoint(point));
@@ -48,7 +48,7 @@ bool Calc::Contains(Point point, std::unordered_map<LONGLONG, unsigned char [SIZ
 	return (((i->second[SIZE_POINT - 1] >> 6) & 1) == 1);
 }
 
-int Calc::Insert(Point point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint, bool pointDelete, Grid& grid) //сќздаем дл€ точки итератор
+int Calc::Insert(POINT point, std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]> &LifePoint, bool pointDelete, Grid& grid) //сќздаем дл€ точки итератор
 {
 	Msg msg;
 	if (LifePointSize >= SIZE_LIFEPOINT) //Overflow Life

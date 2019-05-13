@@ -17,7 +17,7 @@ union ULL
 
 void Rle::Save(std::wstring name, Calc& calc)
 {
-	Point point;
+	POINT point;
 	long areaXmin = LONG_MAX;
 	long areaYmin = LONG_MAX;
 	long areaXmax = LONG_MIN;
@@ -167,7 +167,7 @@ void Rle::Load(std::wstring name, Calc& calc, RECT rect, Grid& grid)
 	long count=0;
 	long countTmp=0;
 	long repeat = 0;
-	Point point;
+	POINT point;
 	long x = 0;
 	long y = 0;
 

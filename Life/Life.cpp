@@ -19,13 +19,13 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса глав�
 Grid grid;
 Calc calc;
 Rle rle;
-Point point;
+POINT point;
 Msg msg;
 
-Point size; //Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
-Point mousePos; // Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение
-Point mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-Point calcPoint;
+POINT size; //Сюда будем присваивать размеры вьюпорта в пикселях и передавать для рисования в Grid.
+Point mousePos; // Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение (LONGLONG)
+POINT mousePosPoint; //Здесь будем хранить позицию мышки с прошлого события, чтобы палить смещение, ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+POINT calcPoint;
 
 static int wheelDelta = 0; // требуется для считывания колесика мышки
 bool DragEnabled=false; // Для таскания грида правой кнопкой мыши
@@ -201,8 +201,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
 	
 	// координаты мыши на Экране
-	long xPos = LOWORD(lParam);
-	long yPos = HIWORD(lParam);
+	LONGLONG xPos = LOWORD(lParam);
+	LONGLONG yPos = HIWORD(lParam);
 
 	// Получим координаты мыши в рамках клиентского окна 
 	// Клиентское окно или вьюпорт это рабочая область формы (без рамки, заголовка и меню).
@@ -397,8 +397,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (grid.autoZoom || grid.zoom) //автомасштабирование
 			{
 				//автомасштабирование
-				double scX = (double)rect.right / ((calc.AreaXmax - calc.AreaXmin + 1));
-				double scY = (double)rect.bottom / ((calc.AreaYmax - calc.AreaYmin + 1));
+				double scX = (double)rect.right / (((LONGLONG)calc.AreaXmax - calc.AreaXmin + 1));
+				double scY = (double)rect.bottom / (((LONGLONG)calc.AreaYmax - calc.AreaYmin + 1));
 				if (scX > scY) scX = scY;// масштаб по макс стороне шаблона
 				if (scX > 32) scX = 32; //макс 32 пикселей
 				long scalePointTmp = grid.scalePoint;
@@ -425,18 +425,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					Point positionTmp;
 					if (grid.scalePoint < 1)//корректируем координаты сетки
 					{
-						positionTmp = { calc.AreaXmin / grid.scalePoint + 1, calc.AreaYmin / grid.scalePoint + 1 };
+						positionTmp = { calc.AreaXmin / grid.scalePoint + 1, calc.AreaYmin / grid.scalePoint + 1 }; //с учетом масштаба уменьшаем
 					}
 					else
 					{
-						positionTmp = { -calc.AreaXmin*grid.scalePoint, -calc.AreaYmin*grid.scalePoint };
+						positionTmp = { -(LONGLONG)calc.AreaXmin*grid.scalePoint, -(LONGLONG)calc.AreaYmin*grid.scalePoint }; //с учетом масштаба увеличиваем
 					}
 
-					if (grid.position.x!=positionTmp.x || grid.position.y!= positionTmp.y)
+					if (grid.position.x!=positionTmp.x || grid.position.y!= positionTmp.y) //если были изменения
 					{
 						grid.position.x = positionTmp.x;
 						grid.position.y = positionTmp.y;
-						grid.updateBuffer = true; //обновляем буфер
+						grid.updateBuffer = true; //обновляем буфер 
 					}
 				grid.zoom = false;
 			}
@@ -445,7 +445,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			HDC hdc = BeginPaint(hWnd, &ps);// hdc это инструмент для рисования в клиентской области окна
 			HDC hMemDC = CreateCompatibleDC(hdc); //двойная буферизация
 			HGDIOBJ oldBmp;
-			if (grid.updateBuffer || grid.areaLife)
+			if (grid.updateBuffer || (grid.areaLife && RunLife))
 			{
 				BITMAPINFO bi;
 				ZeroMemory(&bi, sizeof(BITMAPINFO));
@@ -520,7 +520,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TextOut(hMemDC, Xstart, Ystart, L"Координаты", 10);
 				Ystart += break1;
 				TextOut(hMemDC, Xstart, Ystart, L"X:", 2);
-				Point calcPoint = grid.GetCell(mousePos);
+				POINT calcPoint = grid.GetCell(mousePos);
 				_itow_s(calcPoint.x, buffer, 256, 10);
 				TextOut(hMemDC, Xstart+10, Ystart, buffer, wcsnlen(buffer, 256));
 				Ystart += break1;
@@ -647,15 +647,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetFocus(hWnd); //фокус на главную форму
 		if (grid.scalePoint >= 1) // не рисуем при масштабе меньше 1 
 		{
-			LbuttonClick = true; // Включим режим выделения клеток
-			mousePos.x = xPos;  // Запомним координаты мыши
-			mousePos.y = yPos;
-			calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-			if (calc.Contains(calcPoint, calc.LifePoint)) pointDelete = true; else pointDelete = false; //смотрим есть ли такой элемент
-			mousePosPoint.x = calcPoint.x;
-			mousePosPoint.y = calcPoint.y;
-			calc.Insert(calcPoint, calc.LifePoint, pointDelete,grid);
-			InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+			if (grid.OutRange({ xPos ,yPos })) //выход за пределы игрового поля
+			{
+				msg.OutOfRange();
+			}
+			else
+			{
+				LbuttonClick = true; // Включим режим выделения клеток
+				mousePos.x = xPos;  // Запомним координаты мыши
+				mousePos.y = yPos;
+				calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+				if (calc.Contains(calcPoint, calc.LifePoint)) pointDelete = true; else pointDelete = false; //смотрим есть ли такой элемент
+				mousePosPoint.x = calcPoint.x;
+				mousePosPoint.y = calcPoint.y;
+				calc.Insert(calcPoint, calc.LifePoint, pointDelete, grid);
+				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
+			}
 		}
 		break;
 
@@ -689,31 +696,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//Pause = true;
 			if (grid.scalePoint >= 1) // не рисуем при масштабе меньше 1 
 			{
-				long xPosTmp = xPos - mousePos.x;//разница от текущих координат и записанных в координатах экрана
-				long yPosTmp = yPos - mousePos.y;
-				long MaxPosTmp;// пропуски мышки, которые мы будем обсчитывать
-
-				if (abs(xPosTmp) > abs(yPosTmp)) MaxPosTmp = abs(xPosTmp); else MaxPosTmp = abs(yPosTmp);//макс пропуск в пикселях
-				long ColPosTmp = (MaxPosTmp / grid.scalePoint) + 1;//количество циклов расчета координат по этому пропуску с учетом масштаба
-
-				Point start = mousePos;
-
-				for (long i = 0; i < ColPosTmp; i++)
+				if (grid.OutRange({ xPos ,yPos })) //выход за пределы игрового поля
 				{
-					mousePos.x = start.x + (double)xPosTmp / ColPosTmp * (i + 1);
-					mousePos.y = start.y + (double)yPosTmp / ColPosTmp * (i + 1);
-
-					Point calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
-					if (mousePosPoint.x != calcPoint.x || mousePosPoint.y != calcPoint.y)
-					{
-						mousePosPoint.x = calcPoint.x;
-						mousePosPoint.y = calcPoint.y;
-						if (calc.LifePointSize < SIZE_LIFEPOINT) calc.Insert(calcPoint, calc.LifePoint, pointDelete, grid);
-					}
+					msg.OutOfRange();
 				}
-				mousePos.x = xPos;
-				mousePos.y = yPos;
-				InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
+				else
+				{
+					LONGLONG xPosTmp = xPos - mousePos.x;//разница от текущих координат и записанных в координатах экрана
+					LONGLONG yPosTmp = yPos - mousePos.y;
+					LONGLONG MaxPosTmp;// пропуски мышки, которые мы будем обсчитывать
+
+					if (abs(xPosTmp) > abs(yPosTmp)) MaxPosTmp = abs(xPosTmp); else MaxPosTmp = abs(yPosTmp);//макс пропуск в пикселях
+					long ColPosTmp = (MaxPosTmp / grid.scalePoint) + 1;//количество циклов расчета координат по этому пропуску с учетом масштаба
+
+					Point start = mousePos;
+
+					for (LONGLONG i = 0; i < ColPosTmp; i++)
+					{
+						mousePos.x = start.x + (double)xPosTmp / ColPosTmp * (i + 1);
+						mousePos.y = start.y + (double)yPosTmp / ColPosTmp * (i + 1);
+
+						POINT calcPoint = grid.GetCell(mousePos); // ИСПОЛЬЗУЕМ НЕ ЭКРАННЫЕ КООРДИНАТЫ, А КООРДИНАТЫ В РАМКАХ КЛИЕНТСКОЙ ОБЛАСТИ ОКНА
+						if (mousePosPoint.x != calcPoint.x || mousePosPoint.y != calcPoint.y)
+						{
+							mousePosPoint.x = calcPoint.x;
+							mousePosPoint.y = calcPoint.y;
+							if (calc.LifePointSize < SIZE_LIFEPOINT) calc.Insert(calcPoint, calc.LifePoint, pointDelete, grid);
+						}
+					}
+					mousePos.x = xPos;
+					mousePos.y = yPos;
+					InvalidateRect(hWnd, NULL, false);//перерисовать клиентское окно
+				}
 			}
 		}
 		else // при остальных вариантах движения курсора мыши по пользовательской форме.

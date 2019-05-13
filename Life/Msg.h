@@ -5,7 +5,8 @@ public:
 	Msg();
 	~Msg();
 
-	void ErrOverflow();
 	void SetHWND(HWND hWnd);
+	void ErrOverflow();
+	void OutOfRange();
 };
 

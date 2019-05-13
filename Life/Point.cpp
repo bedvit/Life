@@ -8,7 +8,7 @@ Point::Point()
 
 }
 
-Point::Point(long x, long y)
+Point::Point(LONGLONG x, LONGLONG y)
 {
 	this->x = x;
 	this->y = y;

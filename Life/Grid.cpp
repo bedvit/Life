@@ -2,7 +2,7 @@
 #include <iostream> 
 #include "Grid.h"
 
-static Point sizeBuffer;
+static POINT sizeBuffer;
 static long* PointCount ;
 
 Grid::Grid()
@@ -26,20 +26,21 @@ union ULL
 	long L[2];
 };
 
-void Grid::Move(long x, long y)
+
+void Grid::Move(LONGLONG x, LONGLONG y)
 {
 	position.x += x;
 	position.y += y;
 }
 
 
-Point Grid::GetCell(Point hDCPosition)
+POINT Grid::GetCell(Point point)
 {
 	double scale;
 	if (scalePoint <1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
-	Point res;
-	long xTmp = (hDCPosition.x - position.x);
-	long yTmp = (hDCPosition.y - position.y);
+	POINT res;
+	LONGLONG xTmp = (point.x - position.x);
+	LONGLONG yTmp = (point.y - position.y);
 	if (xTmp < 0) //при отрицательных координатах округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
 		res.x = xTmp / scale - 1;
 	else
@@ -53,7 +54,35 @@ Point Grid::GetCell(Point hDCPosition)
 	return res;
 }
 
-void Grid::AddScale(long x, long y) // Увеличить масштаб отталкиваясь от точки x, y
+bool Grid::OutRange(Point point)
+{
+	double scale;
+	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
+	POINT res;
+	LONGLONG xTmp = (point.x - position.x);
+	LONGLONG yTmp = (point.y - position.y);
+	if (xTmp < 0) //при отрицательных координатах округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+	{
+		if (xTmp / scale - 1 < LONG_MIN) return true;
+	}
+	else
+	{
+		if (xTmp / scale > LONG_MAX) return true;
+	}
+	if (yTmp < 0)
+	{
+		if (yTmp / scale - 1 < LONG_MIN) return true;
+	}
+	else
+	{
+		if (yTmp / scale > LONG_MAX) return true;
+	}
+	return false;
+
+}
+
+
+void Grid::AddScale(LONGLONG x, LONGLONG y) // Увеличить масштаб отталкиваясь от точки x, y
 {
 	if (scalePoint >= 32) return; // максимальный масштаб = 32 пикселя
 
@@ -69,12 +98,11 @@ void Grid::AddScale(long x, long y) // Увеличить масштаб отталкиваясь от точки x
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
 	position.x = x - (double)zx * scale; // Новые координаты центра грида, чтобы под курсором ячейка не двигалась во время масштабирования
 	position.y = y - (double)zy * scale;
-
 }
 
-void Grid::DecScale(long x, long y) //уменьшить масштаб
+void Grid::DecScale(LONGLONG x, LONGLONG y) //уменьшить масштаб
 {
-	if (scalePoint <= -32768) return; // минимальный масштаб = 1/1048576 пиксель
+	if (scalePoint <= -1073741824) return; // минимальный масштаб = 1/32768 пиксель
 
 	double scale;
 	if (scalePoint < 1) scale = (double)-1.00 / scalePoint; else scale = scalePoint;
@@ -171,17 +199,19 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POI
 			{
 				RECT r; //объявляем экзмепляр структуры RECT - координаты прямоугольника.
 				ull.U = i->first;
+				ull.U = i->first;
 
-				if (ull.L[0] < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+				if (scale < 1 && ull.L[0] < 0 ) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
 					r.left = (double)ull.L[0] * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
 				else
 					r.left = (double)ull.L[0] * scale + position.x; //?
 
-				if (ull.L[1] < 0 && scale < 1)
+				if (scale < 1 && ull.L[1] < 0)
 					r.top = (double)ull.L[1] * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
 				else
 					r.top = (double)ull.L[1] * scale + position.y; //?
 
+	
 				r.right = r.left + scale;//X-координата нижнего правого угла прямоугольника.
 				r.bottom = r.top + scale; //Y-координата нижнего правого угла прямоугольника.
 				long yMax = scale - 1;
@@ -245,13 +275,13 @@ void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 	ULL ull;
 	ull.U = i->first;
 
-	if (ull.L[0] < 0 && scale < 1) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
-		AreaXmin = (double)ull.L[0] * scale + 1 + position.x; //X-координата верхнего левого угла прямоугольника.
+	if (scale < 1 && ull.L[0] < 0) //при отрицательных координатах и масштабах менее 1пик - округление в меньшую сторону (целочисленное деление просто отбрасывает дробную часть)
+		AreaXmin = (double)ull.L[0] * scale + position.x+1; //X-координата верхнего левого угла прямоугольника.
 	else
 		AreaXmin = (double)ull.L[0] * scale + position.x; //?
 
-	if (ull.L[1] < 0 && scale < 1)
-		AreaYmin = (double)ull.L[1] * scale + 1 + position.y; //Y-координата верхнего левого угла прямоугольника.
+	if (scale < 1 && ull.L[1] < 0)
+		AreaYmin = (double)ull.L[1] * scale + position.y+1; //Y-координата верхнего левого угла прямоугольника.
 	else
 		AreaYmin = (double)ull.L[1] * scale + position.y; //?
 
