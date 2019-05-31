@@ -259,6 +259,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//заголовок
 				nameWinNew = L"* - " + nameWin;
 				SetWindowText(hWnd, nameWinNew.c_str());
+				SetWindowText(hWndEdit1, L"0000");
+				SetWindowText(hWndEdit2, L"1");
 				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
@@ -291,6 +293,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				nameWinNew = nameWinNew.substr(nameWinNew.find_last_of(L"\\") + 1, std::wstring::npos);
 				nameWinNew = nameWinNew + L" - " + nameWin;
 				SetWindowText(hWnd, nameWinNew.c_str());
+				SetWindowText(hWndEdit1, L"0000");
+				SetWindowText(hWndEdit2, L"1");
 				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
