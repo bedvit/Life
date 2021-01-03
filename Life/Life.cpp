@@ -262,6 +262,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetWindowText(hWndEdit1, L"0000");
 				SetWindowText(hWndEdit2, L"1");
 				////
+				if (grid.autoZoom) { grid.autoZoom = !grid.autoZoom; }//в новом файле отключаем по умолчанию автомасштабирование
+				if (grid.areaLife) { grid.areaLife = !grid.areaLife; }
+				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
 				break;
@@ -295,6 +298,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetWindowText(hWnd, nameWinNew.c_str());
 				SetWindowText(hWndEdit1, L"0000");
 				SetWindowText(hWndEdit2, L"1");
+				////
+				if (grid.autoZoom) { grid.autoZoom = !grid.autoZoom; }//в новом файле отключаем по умолчанию автомасштабирование
+				if (grid.areaLife) { grid.areaLife = !grid.areaLife; }
 				////
 				grid.updateBuffer = true; //перерисовываем сетку
 				InvalidateRect(hWnd, NULL, false); //перерисовать клиентское окно
@@ -332,6 +338,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			case IDM_ZOOM:
 				SetFocus(hWnd); //фокус на главную форму
+				if (calc.Population == 0) { //если нет жывых клеток
+					grid.zoom = false;
+					MessageBox(hWnd, L"Нет живых клеток", L"Life", MB_OK | MB_ICONINFORMATION);
+					break;
+				}
 				grid.zoom = true;
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
@@ -339,6 +350,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case IDM_AUTOZOOM:
 				SetFocus(hWnd); //фокус на главную форму
+				if (calc.Population == 0) { //если нет жывых клеток
+					grid.autoZoom  = false;
+					MessageBox(hWnd, L"Нет живых клеток", L"Life", MB_OK | MB_ICONINFORMATION);
+					break;
+				}
 				grid.autoZoom= !grid.autoZoom;
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
 				GenerationFix = calc.Generation;//пересчитываем скорость поколений из-за задержки
@@ -354,6 +370,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			case IDM_AREALIFE:
 				SetFocus(hWnd); //фокус на главную форму
+				if (calc.Population == 0) { //если нет жывых клеток
+					grid.areaLife = false;
+					MessageBox(hWnd, L"Нет живых клеток", L"Life", MB_OK | MB_ICONINFORMATION); 
+					break;
+				}
 				grid.areaLife = !grid.areaLife;
 				grid.updateBuffer = true;
 				start_timeNew = clock();//пересчитываем скорость поколений из-за задержки
@@ -398,7 +419,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			size.y = rect.bottom - rect.top+1;// + 1; //высота
 			bool update=false;
 
-			if (grid.autoZoom || grid.zoom) //автомасштабирование
+			if ((grid.autoZoom || grid.zoom)&& (calc.Population>0)) //автомасштабирование
 			{
 				//автомасштабирование
 				double scX = (double)rect.right / (((LONGLONG)calc.AreaXmax - calc.AreaXmin + 1));
