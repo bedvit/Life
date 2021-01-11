@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef _WIN64
-#define SIZE_POINT 9
+#define SIZE_POINT 16
 #define SIZE_LIFEPOINT 33000000 //MAX количество точек в мапе с учетом облака
 #elif _WIN32
 #define SIZE_POINT 8
