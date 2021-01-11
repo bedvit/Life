@@ -195,7 +195,7 @@ void Grid::Draw(RECT& rect, std::unordered_map<LONGLONG, unsigned char [SIZE_POI
 		std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::iterator i;
 		for (i = LifePoint.begin(); i != LifePoint.end(); ++i)
 		{
-			if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 1)//(i->second.life)
+			if (i->second[SIZE_POINT - 2] == 1)//(i->second.life)
 			{
 				RECT r; //объ€вл€ем экзмепл€р структуры RECT - координаты пр€моугольника.
 				ull.U = i->first;
@@ -291,7 +291,7 @@ void Grid::DrawPoint(std::unordered_map<LONGLONG, unsigned char [SIZE_POINT]>::i
 	if (AreaXmax >= 0 && AreaYmax >= 0 && AreaXmin < sizeBuffer.x && AreaYmin < sizeBuffer.y)
 	{
 		indexP = (AreaYmin + 32)*(sizeBuffer.x + 32) + (AreaXmin + 32);
-		if (((i->second[SIZE_POINT-1]  >> 6) & 1) == 1)	++PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
+		if (i->second[SIZE_POINT - 2] == 1)	++PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
 		else --PointCount[indexP];//добавл€ем данные в PointCount о количестве €чеек в пикселе
 		
 		if (PointCount[indexP] == 1) //отрисовываем квадрат
